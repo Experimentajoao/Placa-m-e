@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HardwareLab Pro: Simulador & Avaliação</title>
+    <title>HardwareLab Pro: Avaliação e Certificação</title>
     <style>
         :root {
             --bg-dark: #020617;
@@ -24,37 +24,21 @@
         /* Barra de Controles */
         .controls-bar {
             background: var(--panel-bg);
-            padding: 15px 25px;
+            padding: 10px 25px;
             border-radius: 50px;
             border: 1px solid var(--border-ui);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: flex;
-            gap: 20px;
+            gap: 15px;
             box-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
             z-index: 10;
-            align-items: center;
         }
-
-        .btn-loader {
-            background: #1e293b;
-            color: #cbd5e1;
-            border: 1px solid var(--border-ui);
-            padding: 10px 18px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-loader:hover { border-color: var(--accent); color: #fff; }
-
-        .modes-group { display: flex; gap: 10px; border-left: 2px solid var(--border-ui); padding-left: 20px; }
 
         .mode-switch {
             background: none;
             color: #64748b;
             border: 2px solid #64748b;
-            padding: 10px 20px;
+            padding: 8px 20px;
             border-radius: 20px;
             font-weight: 800;
             text-transform: uppercase;
@@ -65,7 +49,7 @@
         }
 
         .mode-switch.active[data-mode="study"] { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
-        .mode-switch.active[data-mode="exam"] { color: #000; border-color: var(--correct); background: var(--correct); box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
+        .mode-switch.active[data-mode="exam"] { color: #000; border-color: var(--correct); background: var(--correct); }
 
         /* Viewport e Imagens */
         .main-container { display: flex; width: 100%; max-width: 1200px; justify-content: center; position: relative;}
@@ -88,62 +72,33 @@
 
         /* Hotspots */
         .hotspot { position: absolute; background: rgba(34, 211, 238, 0.05); border: 2px solid var(--accent); border-radius: 4px; cursor: pointer; transition: 0.3s; z-index: 10; display: none;}
-        
         .board-wrapper.ready .hotspot { display: block; }
 
-        /* Estilo Estudo */
         .viewport:not(.exam-active) .hotspot:hover, 
-        .viewport:not(.exam-active) .hotspot.active { 
-            background: rgba(34, 211, 238, 0.3); 
-            border-color: var(--accent); 
-            box-shadow: 0 0 15px var(--accent); 
-            z-index: 100; 
-        }
+        .viewport:not(.exam-active) .hotspot.active { background: rgba(34, 211, 238, 0.3); border-color: var(--accent); box-shadow: 0 0 15px var(--accent); z-index: 100; }
 
-        /* Estilos Modo Prova (Feedback) */
         .hotspot.correct-flash { background: rgba(74, 222, 128, 0.6) !important; border-color: var(--correct) !important; box-shadow: 0 0 25px var(--correct) !important; z-index: 101;}
         .hotspot.wrong-flash { background: rgba(239, 68, 68, 0.6) !important; border-color: var(--wrong) !important; box-shadow: 0 0 25px var(--wrong) !important; z-index: 101;}
-        
-        /* Deixa as peças invisíveis durante a prova para aumentar a dificuldade */
-        .viewport.exam-active .hotspot:not(.correct-flash):not(.wrong-flash) {
-            border-color: transparent;
-            background: transparent;
-        }
-        .viewport.exam-active .hotspot:hover:not(.correct-flash):not(.wrong-flash) {
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .placeholder { text-align: center; color: var(--border-ui); position: absolute; z-index: 0;}
+        .viewport.exam-active .hotspot:not(.correct-flash):not(.wrong-flash) { border-color: transparent; background: transparent; }
 
         /* Tooltip Premium */
-        .tooltip { position: absolute; box-sizing: border-box; background: rgba(15, 23, 42, 0.94); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; width: 340px; z-index: 200; display: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(-100%); pointer-events: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn { from { opacity: 0; transform: translateY(-90%) scale(0.8); } to { opacity: 1; transform: translateY(-100%) scale(1); } }
+        .tooltip { position: absolute; box-sizing: border-box; background: rgba(15, 23, 42, 0.94); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; width: 340px; z-index: 200; display: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(-100%); pointer-events: none; }
         .tooltip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-pos, 50%); margin-left: -10px; border-width: 10px; border-style: solid; border-color: rgba(15, 23, 42, 0.94) transparent transparent transparent; transition: left 0.3s ease; }
-        .tooltip.bottom-arrow { transform: translateY(0); animation: popInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popInBottom { from { opacity: 0; transform: translateY(10%) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .tooltip.bottom-arrow { transform: translateY(0); }
         .tooltip.bottom-arrow::after { top: -20px; border-color: transparent transparent rgba(15, 23, 42, 0.94) transparent; }
-        
         .tooltip h2 { color: var(--accent); margin: 0 0 10px 0; font-size: 1.4em; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
         .tooltip .section { margin-top: 12px; }
         .tooltip .label { color: var(--accent); font-weight: bold; text-transform: uppercase; font-size: 0.75em; display: block; margin-bottom: 4px; }
         .tooltip p { margin: 0; font-size: 0.9em; line-height: 1.5; color: #cbd5e1; }
 
-        /* ====== PAINEL DO MODO PROVA ====== */
+        /* Painel de Prova */
         .exam-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+            position: absolute; top: 20px; right: 20px;
             background: rgba(15, 23, 42, 0.95);
             border: 2px solid var(--border-ui);
-            border-radius: 16px;
-            padding: 20px;
-            width: 300px;
-            z-index: 150;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            display: none;
-            animation: slideInRight 0.5s ease;
+            border-radius: 16px; padding: 20px; width: 300px; z-index: 150;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: none; animation: slideInRight 0.5s ease;
         }
 
         @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -152,23 +107,56 @@
         .exam-title { font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 1px; font-size: 0.9em;}
         .exam-score { font-size: 1.2em; font-weight: 900; color: var(--correct); font-family: monospace; background: rgba(74, 222, 128, 0.1); padding: 4px 8px; border-radius: 6px;}
 
-        /* Telas da Prova */
         #exam-intro, #exam-active-area, #exam-result { display: none; text-align: center; }
-        
         .question-label { color: #94a3b8; font-size: 0.85em; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: bold;}
         .question-text { color: #fff; font-size: 1.4em; font-weight: 700; line-height: 1.3; min-height: 50px;}
-
         .exam-feedback { margin-top: 15px; font-weight: bold; min-height: 1.5em; font-size: 1.1em; border-radius: 6px; padding: 5px;}
-
-        .btn-exam { width: 100%; margin-top: 15px; background: var(--correct); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
+        
+        /* Inputs e Botões */
+        .student-input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--accent); background: #1e293b; color: #fff; text-align: center; font-weight: bold;}
+        .student-input:focus { outline: none; box-shadow: 0 0 10px var(--accent); }
+        
+        .btn-exam { width: 100%; margin-top: 10px; background: var(--correct); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
         .btn-exam:hover { transform: scale(1.02); filter: brightness(1.1); }
         .btn-exam.secondary { background: #334155; color: #fff; }
+        .btn-exam.print { background: #3b82f6; color: #fff; } 
 
-        /* Progress Bar */
+        /* Barra de Progresso */
         .progress-bar { width: 100%; height: 6px; background: #1e293b; border-radius: 3px; margin-top: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
 
-        /* Mapeamento (Exemplos simplificados) */
+        /* =========================================================
+           ÁREA DO CERTIFICADO (SÓ APARECE QUANDO O ALUNO IMPRIME)
+           ========================================================= */
+        #certificate-area { display: none; } 
+
+        @media print {
+            body > *:not(#certificate-area) { display: none !important; }
+            body { background: white !important; padding: 0; margin: 0; }
+            
+            #certificate-area {
+                display: flex !important;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                width: 100vw;
+                height: 100vh;
+                color: #000 !important;
+                font-family: 'Segoe UI', sans-serif;
+                border: 15px solid #0f172a;
+                padding: 40px;
+                box-sizing: border-box;
+            }
+            .cert-title { font-size: 40px; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; font-weight: 900; }
+            .cert-subtitle { font-size: 20px; color: #64748b; margin-bottom: 40px; }
+            .cert-name { font-size: 45px; color: #22d3ee; border-bottom: 2px solid #22d3ee; padding-bottom: 10px; margin-bottom: 30px; width: 80%; text-transform: uppercase; font-weight: bold;}
+            .cert-text { font-size: 22px; margin-bottom: 20px; }
+            .cert-score { font-size: 60px; font-weight: 900; color: #4ade80; margin: 20px 0; }
+            .cert-footer { margin-top: 50px; font-size: 16px; color: #64748b; border-top: 1px solid #ccc; padding-top: 20px; width: 60%; }
+        }
+
+        /* Mapeamento dos Componentes (Insira as porcentagens da sua placa aqui) */
         #h-cpu    { top: 25%; left: 32%; width: 22%; height: 18%; }
         #h-ram    { top: 18%; left: 66%; width: 14%; height: 46%; }
         #h-atx    { top: 29%; left: 81%; width: 5%; height: 19%; }
@@ -195,23 +183,14 @@
     </div>
 
     <div class="controls-bar">
-        <label class="btn-loader">
-            📷 CARREGAR PLACA-MÃE
-            <input type="file" id="loader-base" style="display: none;" accept="image/*">
-        </label>
-        
-        <div class="modes-group">
-            <button class="mode-switch active" data-mode="study" onclick="setMode('study')">🔍 MODO ESTUDO</button>
-            <button class="mode-switch" data-mode="exam" onclick="setMode('exam')">📝 MODO PROVA</button>
-        </div>
+        <button class="mode-switch active" data-mode="study" onclick="setMode('study')">🔍 MODO ESTUDO</button>
+        <button class="mode-switch" data-mode="exam" onclick="setMode('exam')">📝 MODO PROVA</button>
     </div>
 
     <div class="main-container">
         <div class="viewport" id="viewport">
-            <div class="placeholder" id="hint">⚠️ Aguardando carregamento da imagem...</div>
-            
             <div class="board-wrapper" id="wrapper">
-                <img id="view-img-base" class="board-img base" src="">
+                <img id="view-img-base" class="board-img base" src="IMG_0040.jpeg" alt="Placa-Mãe">
                 
                 <div id="h-cpu" class="hotspot" onclick="handleHotspotClick('cpu', event)"></div>
                 <div id="h-ram" class="hotspot" onclick="handleHotspotClick('ram', event)"></div>
@@ -225,7 +204,7 @@
                 <div id="h-cpupwr" class="hotspot" onclick="handleHotspotClick('cpupwr', event)"></div>
                 <div id="h-ide" class="hotspot" onclick="handleHotspotClick('ide', event)"></div>
                 <div id="h-caps" class="hotspot" onclick="handleHotspotClick('caps', event)"></div>
-                <div id="h-traces" class="hotspot" onclick="handleHotspotClick('traces', event)"></div>
+                <div id="h-traces" class="hotspot" onclick="event.stopPropagation(); handleHotspotClick('traces', event)"></div>
                 <div id="h-front" class="hotspot" onclick="handleHotspotClick('front', event)"></div>
                 <div id="h-choke" class="hotspot" onclick="handleHotspotClick('choke', event)"></div>
                 <div id="h-usb" class="hotspot" onclick="handleHotspotClick('usb', event)"></div>
@@ -233,14 +212,8 @@
 
             <div class="tooltip" id="tooltip">
                 <h2 id="t-name">Componente</h2>
-                <div class="section">
-                    <span class="label">O que é e o que faz?</span>
-                    <p id="t-func"></p>
-                </div>
-                <div class="section curiosity">
-                    <span class="label" style="color: #f472b6;">Curiosidade de Aula 💡</span>
-                    <p id="t-curio"></p>
-                </div>
+                <div class="section"><span class="label">O que é e o que faz?</span><p id="t-func"></p></div>
+                <div class="section curiosity"><span class="label" style="color: #f472b6;">Curiosidade 💡</span><p id="t-curio"></p></div>
             </div>
         </div>
 
@@ -251,7 +224,8 @@
             </div>
 
             <div id="exam-intro" style="display: block;">
-                <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 20px;">Teste seus conhecimentos. Encontre 10 peças na placa-mãe sem a ajuda do zoom.</p>
+                <p style="color: #cbd5e1; font-size: 0.9em;">Identifique-se para validar seu teste:</p>
+                <input type="text" id="student-name" class="student-input" placeholder="Digite seu nome completo" autocomplete="off">
                 <button class="btn-exam" onclick="startExam()">▶️ INICIAR PROVA</button>
             </div>
 
@@ -265,15 +239,30 @@
             <div id="exam-result">
                 <h2 style="color: #fff; margin: 0 0 10px 0;">Fim de Jogo!</h2>
                 <p style="color: #94a3b8; font-size: 0.9em;">Seu placar final foi:</p>
-                <div style="font-size: 3em; font-weight: 900; color: var(--correct); margin-bottom: 20px;" id="final-score-display">100</div>
-                <button class="btn-exam" onclick="startExam()">🔄 JOGAR NOVAMENTE</button>
-                <button class="btn-exam secondary" onclick="setMode('study')">⬅️ VOLTAR AO ESTUDO</button>
+                <div style="font-size: 3.5em; font-weight: 900; margin-bottom: 20px;" id="final-score-display">100</div>
+                
+                <button class="btn-exam print" onclick="printCertificate()">🖨️ GERAR CERTIFICADO PDF</button>
+                <button class="btn-exam" onclick="resetExamUI()">🔄 JOGAR NOVAMENTE</button>
+                <button class="btn-exam secondary" onclick="setMode('study')">⬅️ SAIR DA PROVA</button>
             </div>
         </div>
     </div>
 
+    <div id="certificate-area">
+        <div class="cert-title">CERTIFICADO DE EXCELÊNCIA</div>
+        <div class="cert-subtitle">Laboratório de Arquitetura de Computadores</div>
+        <div class="cert-text">Certificamos com louvor que o(a) aluno(a)</div>
+        <div class="cert-name" id="cert-name-display">Nome do Aluno</div>
+        <div class="cert-text">concluiu a Avaliação Prática de Mapeamento de Hardware com a pontuação final de:</div>
+        <div class="cert-score" id="cert-score-display">100 / 100</div>
+        <div class="cert-text">Demonstrando alto nível de conhecimento em componentes e circuitos de placas-mãe.</div>
+        <div class="cert-footer">
+            Emitido pelo HardwareLab PRO em: <span id="cert-date-display"></span><br>
+            Autenticação Digital Interna
+        </div>
+    </div>
+
     <script>
-        // --- DADOS ---
         const data = {
             cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa para conversar com todas as outras peças.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
             ram: { name: "Slots de Memória RAM", func: "A 'mesa de trabalho'. É aqui que o PC guarda o que você está usando AGORA.", curio: "As cores laranjas indicam o 'Dual Channel'." },
@@ -293,251 +282,175 @@
             usb: { name: "Cabeçalhos USB", func: "O 'Extensor'. Liga aquelas portas USB da frente do gabinete.", curio: "Cada porta USB amarela consegue alimentar um celular de forma independente." }
         };
 
-        // --- CARREGADOR DE IMAGEM ---
-        let isLoaded = false;
-        document.getElementById('loader-base').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    document.getElementById('view-img-base').src = ev.target.result;
-                    document.getElementById('wrapper').classList.add('ready');
-                    document.getElementById('hint').style.display = 'none';
-                    isLoaded = true;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+        const wrapper = document.getElementById('wrapper');
+        let currentMode = 'study';
+        let examActive = false;
+        let asked = [];
+        let targetId = "";
+        let score = 0;
+        let clickLocked = false;
+        let currentStudentName = "";
 
-        // --- GERENCIAMENTO DE MODOS ---
-        let currentMode = 'study'; // 'study' ou 'exam'
+        window.onload = () => {
+            wrapper.classList.add('ready');
+        };
 
         function setMode(mode) {
-            if (!isLoaded) { 
-                document.getElementById('hint').style.color = "#ef4444"; 
-                document.getElementById('hint').innerText = "⚠️ Carregue a imagem da Placa-Mãe primeiro!";
-                return; 
-            }
-            
             currentMode = mode;
-            resetZoom(); // Esconde tooltip e tira zoom
-            
-            // Troca visual dos botões
+            resetZoom();
             document.querySelectorAll('.mode-switch').forEach(b => b.classList.remove('active'));
-            document.querySelector(`.mode-switch[data-mode="${mode}"]`).classList.add('active');
-
-            const viewport = document.getElementById('viewport');
-            const examPanel = document.getElementById('exam-panel');
-
-            if (mode === 'study') {
-                viewport.classList.remove('exam-active');
-                examPanel.style.display = 'none';
-                examActive = false;
-            } else if (mode === 'exam') {
-                viewport.classList.add('exam-active');
-                examPanel.style.display = 'block';
-                document.getElementById('exam-intro').style.display = 'block';
-                document.getElementById('exam-active-area').style.display = 'none';
-                document.getElementById('exam-result').style.display = 'none';
-                document.getElementById('exam-score').innerText = "000";
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            document.getElementById('viewport').classList.toggle('exam-active', mode === 'exam');
+            document.getElementById('exam-panel').style.display = mode === 'exam' ? 'block' : 'none';
+            if(mode === 'exam') {
+                resetExamUI();
             }
         }
 
-        // --- SISTEMA DE CLIQUES ---
+        function resetExamUI() {
+            document.getElementById('exam-intro').style.display = 'block';
+            document.getElementById('exam-active-area').style.display = 'none';
+            document.getElementById('exam-result').style.display = 'none';
+            document.getElementById('student-name').value = ""; 
+            document.getElementById('exam-score').innerText = "000";
+        }
+
         function handleHotspotClick(id, event) {
             if (currentMode === 'study') {
-                explore(id, event);
-            } else if (currentMode === 'exam') {
+                const item = data[id];
+                document.getElementById('t-name').innerText = item.name;
+                document.getElementById('t-func').innerText = item.func;
+                document.getElementById('t-curio').innerText = item.curio;
+                
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.display = 'block';
+                
+                const rect = wrapper.getBoundingClientRect();
+                const x = ((event.clientX - rect.left) / rect.width) * 100;
+                const y = ((event.clientY - rect.top) / rect.height) * 100;
+                wrapper.style.transformOrigin = `${x}% ${y}%`;
+                wrapper.style.transform = "scale(2.3)";
+
+                const vpRect = document.getElementById('viewport').getBoundingClientRect();
+                let clickX = event.clientX - vpRect.left;
+                let clickY = event.clientY - vpRect.top;
+                
+                if (clickY - tooltip.offsetHeight < 20) {
+                    tooltip.classList.add('bottom-arrow');
+                    tooltip.style.top = (clickY + 15) + 'px';
+                } else {
+                    tooltip.classList.remove('bottom-arrow');
+                    tooltip.style.top = (clickY - 15) + 'px';
+                }
+
+                let leftPos = clickX - (tooltip.offsetWidth / 2); 
+                leftPos = Math.max(20, Math.min(leftPos, vpRect.width - tooltip.offsetWidth - 20));
+                let arrowPos = ((clickX - leftPos) / tooltip.offsetWidth) * 100;
+                
+                tooltip.style.left = leftPos + 'px';
+                tooltip.style.setProperty('--arrow-pos', Math.max(8, Math.min(92, arrowPos)) + '%');
+
+                document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
+                document.getElementById('h-'+id).classList.add('active');
+            } else if (examActive) {
                 checkAnswer(id);
             }
         }
 
-        // --- MODO ESTUDO: TOOLTIP ---
-        function explore(id, event) {
-            const wrap = document.getElementById('wrapper');
-            const tooltip = document.getElementById('tooltip');
-            const viewport = document.getElementById('viewport');
-            
-            // Zoom
-            const rect = wrap.getBoundingClientRect();
-            const clickPercentX = ((event.clientX - rect.left) / rect.width) * 100;
-            const clickPercentY = ((event.clientY - rect.top) / rect.height) * 100;
-
-            wrap.style.transformOrigin = `${clickPercentX}% ${clickPercentY}%`;
-            wrap.style.transform = "scale(2.3)";
-            
-            // Textos
-            const item = data[id];
-            document.getElementById('t-name').innerText = item.name;
-            document.getElementById('t-func').innerText = item.func;
-            document.getElementById('t-curio').innerText = item.curio;
-            
-            // Posicionamento inteligente (Colisão)
-            const vpRect = viewport.getBoundingClientRect();
-            let clickX = event.clientX - vpRect.left;
-            let clickY = event.clientY - vpRect.top;
-
-            tooltip.style.display = 'block';
-            
-            const tooltipWidth = tooltip.offsetWidth;
-            const tooltipHeight = tooltip.offsetHeight;
-            const vpWidth = viewport.offsetWidth;
-
-            if (clickY - tooltipHeight < 20) {
-                tooltip.classList.add('bottom-arrow');
-                tooltip.style.top = (clickY + 15) + 'px';
-            } else {
-                tooltip.classList.remove('bottom-arrow');
-                tooltip.style.top = (clickY - 15) + 'px';
-            }
-
-            let leftPos = clickX - (tooltipWidth / 2); 
-            let arrowPos = 50; 
-
-            if (leftPos < 20) {
-                leftPos = 20; 
-                arrowPos = ((clickX - leftPos) / tooltipWidth) * 100; 
-            } else if (leftPos + tooltipWidth > vpWidth - 20) {
-                leftPos = vpWidth - tooltipWidth - 20; 
-                arrowPos = ((clickX - leftPos) / tooltipWidth) * 100;
-            }
-
-            arrowPos = Math.max(8, Math.min(92, arrowPos));
-
-            tooltip.style.left = leftPos + 'px';
-            tooltip.style.setProperty('--arrow-pos', arrowPos + '%');
-
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
-            document.getElementById('h-'+id).classList.add('active');
-        }
-
-        function resetZoom() {
-            const wrap = document.getElementById('wrapper');
-            const tooltip = document.getElementById('tooltip');
-            wrap.style.transform = "scale(1)";
-            tooltip.style.display = 'none';
-            document.querySelectorAll('.hotspot').forEach(h => {
-                h.classList.remove('active', 'correct-flash', 'wrong-flash');
-            });
-        }
-
-        // --- MODO PROVA: LÓGICA DO JOGO ---
-        const MAX_QUESTIONS = 10;
-        let score = 0;
-        let askedQuestions = [];
-        let currentTargetId = "";
-        let examActive = false;
-        let clickLocked = false; // Trava cliques enquanto processa a resposta
-
         function startExam() {
-            if (!isLoaded) return;
-            score = 0;
-            askedQuestions = [];
-            clickLocked = false;
-            examActive = true;
-            
-            updateScoreUI();
-            
-            // Alterna Telas do Painel
+            const nameInput = document.getElementById('student-name').value.trim();
+            if(!nameInput) {
+                alert("⚠️ Por favor, digite seu nome completo para validar a prova.");
+                return;
+            }
+            currentStudentName = nameInput;
+
+            score = 0; asked = []; examActive = true; clickLocked = false;
+            document.getElementById('exam-score').innerText = "000";
             document.getElementById('exam-intro').style.display = 'none';
             document.getElementById('exam-result').style.display = 'none';
             document.getElementById('exam-active-area').style.display = 'block';
-            
             resetZoom();
             nextQuestion();
         }
 
         function nextQuestion() {
-            if (askedQuestions.length >= MAX_QUESTIONS) {
+            const keys = Object.keys(data).filter(k => !asked.includes(k));
+            if (asked.length >= 10 || keys.length === 0) {
                 endGame();
                 return;
             }
-
-            // Sorteia uma peça que ainda não foi perguntada
-            const allKeys = Object.keys(data);
-            const availableKeys = allKeys.filter(k => !askedQuestions.includes(k));
-            currentTargetId = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+            targetId = keys[Math.floor(Math.random() * keys.length)];
+            asked.push(targetId);
             
-            askedQuestions.push(currentTargetId);
-
-            // Atualiza UI
-            document.getElementById('q-counter').innerText = `Questão ${askedQuestions.length} de ${MAX_QUESTIONS}`;
-            document.getElementById('question-text').innerText = data[currentTargetId].name;
+            document.getElementById('q-counter').innerText = `Questão ${asked.length} de 10`;
+            document.getElementById('question-text').innerText = data[targetId].name;
+            document.getElementById('exam-feedback').innerText = "Aguardando seu clique...";
+            document.getElementById('exam-feedback').style.backgroundColor = "transparent";
+            document.getElementById('exam-feedback').style.color = "#94a3b8";
             
-            const feedbackEl = document.getElementById('exam-feedback');
-            feedbackEl.innerText = "Aguardando seu clique...";
-            feedbackEl.style.color = "#94a3b8";
-            feedbackEl.style.backgroundColor = "transparent";
-
-            // Atualiza barra de progresso
-            const progress = ((askedQuestions.length - 1) / MAX_QUESTIONS) * 100;
+            const progress = ((asked.length - 1) / 10) * 100;
             document.getElementById('progress-fill').style.width = progress + '%';
             
-            clickLocked = false; // Libera o clique do aluno
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('correct-flash', 'wrong-flash'));
+            clickLocked = false;
         }
 
-        function checkAnswer(clickedId) {
+        function checkAnswer(id) {
             if (!examActive || clickLocked) return;
-            clickLocked = true; // Impede duplos cliques
-
-            const feedbackEl = document.getElementById('exam-feedback');
-            const clickedEl = document.getElementById('h-' + clickedId);
-            const correctEl = document.getElementById('h-' + currentTargetId);
-
-            // Reseta cores anteriores
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('correct-flash', 'wrong-flash'));
-
-            if (clickedId === currentTargetId) {
-                // ACERTOU
-                score += 10;
-                clickedEl.classList.add('correct-flash');
-                feedbackEl.innerText = "CERTO! +10 pontos";
-                feedbackEl.style.color = "#000";
-                feedbackEl.style.backgroundColor = "#4ade80"; // Verde
-            } else {
-                // ERROU
-                clickedEl.classList.add('wrong-flash');
-                correctEl.classList.add('correct-flash'); // Pisca a certa pra ensinar
-                feedbackEl.innerText = "ERRADO! Sem pontos.";
-                feedbackEl.style.color = "#fff";
-                feedbackEl.style.backgroundColor = "#ef4444"; // Vermelho
-            }
-
-            updateScoreUI();
-
-            // Aguarda 2 segundos para o aluno ver o feedback antes de pular
-            setTimeout(() => {
-                clickedEl.classList.remove('correct-flash', 'wrong-flash');
-                correctEl.classList.remove('correct-flash');
-                nextQuestion();
-            }, 2000);
+            clickLocked = true;
+            
+            const correct = id === targetId;
+            if (correct) score += 10;
+            
+            document.getElementById('h-' + id).classList.add(correct ? 'correct-flash' : 'wrong-flash');
+            document.getElementById('h-' + targetId).classList.add('correct-flash'); 
+            
+            const fb = document.getElementById('exam-feedback');
+            fb.innerText = correct ? "CERTO! +10 pontos" : "ERRADO! Sem pontos.";
+            fb.style.backgroundColor = correct ? "#4ade80" : "#ef4444";
+            fb.style.color = correct ? "#000" : "#fff";
+            
+            document.getElementById('exam-score').innerText = String(score).padStart(3, '0');
+            
+            setTimeout(() => { nextQuestion(); }, 1500);
         }
 
         function endGame() {
             examActive = false;
             document.getElementById('progress-fill').style.width = '100%';
-            
             setTimeout(() => {
                 document.getElementById('exam-active-area').style.display = 'none';
                 document.getElementById('exam-result').style.display = 'block';
-                document.getElementById('final-score-display').innerText = score;
                 
-                // Muda a cor do placar final dependendo do desempenho
                 const finalScoreEl = document.getElementById('final-score-display');
-                if(score >= 80) finalScoreEl.style.color = "#4ade80"; // Verde
-                else if(score >= 50) finalScoreEl.style.color = "#eab308"; // Amarelo
-                else finalScoreEl.style.color = "#ef4444"; // Vermelho
+                finalScoreEl.innerText = score;
+                if(score >= 80) finalScoreEl.style.color = "#4ade80"; 
+                else if(score >= 50) finalScoreEl.style.color = "#eab308"; 
+                else finalScoreEl.style.color = "#ef4444"; 
             }, 500);
         }
 
-        function updateScore() {
-            // Formata com zeros (ex: 040)
-            document.getElementById('exam-score').innerText = String(score).padStart(3, '0');
+        function resetZoom() {
+            wrapper.style.transform = "scale(1)";
+            document.getElementById('tooltip').style.display = 'none';
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active', 'correct-flash', 'wrong-flash'));
         }
-        
-        // Alias para updateScore (compatibilidade interna)
-        function updateScoreUI() { updateScore(); }
 
+        function printCertificate() {
+            document.getElementById('cert-name-display').innerText = currentStudentName;
+            document.getElementById('cert-score-display').innerText = `${score} / 100`;
+            
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            document.getElementById('cert-date-display').innerText = hoje;
+
+            const certScoreEl = document.getElementById('cert-score-display');
+            if(score >= 80) certScoreEl.style.color = "#4ade80"; 
+            else if(score >= 50) certScoreEl.style.color = "#eab308"; 
+            else certScoreEl.style.color = "#ef4444"; 
+
+            window.print();
+        }
     </script>
 </body>
 </html>
