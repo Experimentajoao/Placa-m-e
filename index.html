@@ -3,190 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratório de Hardware: Anatomia Completa da Placa-Mãe</title>
+    <title>HardwareLab Pro: Simulador & Avaliação</title>
     <style>
         :root {
             --bg-dark: #020617;
             --panel-bg: #0f172a;
             --text-main: #f1f5f9;
             --accent: #22d3ee;
-            --highlight: #f472b6;
+            --correct: #4ade80;
+            --wrong: #ef4444;
             --border-ui: #334155;
         }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden;}
 
-        #radar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(244, 114, 182, 0.9);
-            color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 16px;
-            font-weight: bold;
-            z-index: 9999;
-            box-shadow: 0 0 15px var(--highlight);
-            pointer-events: none;
-        }
-
+        /* Interface High-Tech */
         .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin: 0; }
+        .header h1 { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin: 0; font-size: 2em; }
         
-        .controls {
+        /* Barra de Controles */
+        .controls-bar {
             background: var(--panel-bg);
-            padding: 15px;
-            border-radius: 12px;
+            padding: 15px 25px;
+            border-radius: 50px;
             border: 1px solid var(--border-ui);
             margin-bottom: 25px;
             display: flex;
-            gap: 15px;
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+            gap: 20px;
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
             z-index: 10;
+            align-items: center;
         }
 
-        .btn-action {
-            background: var(--accent);
-            color: #020617;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 800;
+        .btn-loader {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid var(--border-ui);
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
             cursor: pointer;
             transition: 0.3s;
         }
+        .btn-loader:hover { border-color: var(--accent); color: #fff; }
 
-        .btn-action:hover { filter: brightness(1.2); transform: scale(1.05); }
+        .modes-group { display: flex; gap: 10px; border-left: 2px solid var(--border-ui); padding-left: 20px; }
 
-        .main-container {
-            display: flex;
-            width: 100%;
-            max-width: 1000px;
-            justify-content: center;
+        .mode-switch {
+            background: none;
+            color: #64748b;
+            border: 2px solid #64748b;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 1px;
         }
 
-        /* O Viewport agora centraliza o conteúdo perfeitamente */
+        .mode-switch.active[data-mode="study"] { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
+        .mode-switch.active[data-mode="exam"] { color: #000; border-color: var(--correct); background: var(--correct); box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
+
+        /* Viewport e Imagens */
+        .main-container { display: flex; width: 100%; max-width: 1200px; justify-content: center; position: relative;}
+
         .viewport {
             position: relative;
             width: 100%;
-            height: 75vh;
+            height: 78vh;
             min-height: 600px;
             overflow: hidden;
-            border: 2px solid var(--accent);
-            border-radius: 12px;
+            border: 2px solid var(--border-ui);
+            border-radius: 16px;
             background: #000;
-            cursor: crosshair;
-            box-shadow: 0 0 30px rgba(34, 211, 238, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* O Wrapper agora encolhe para abraçar examente o tamanho da imagem */
-        .board-wrapper {
-            position: relative;
-            display: inline-block; 
-            transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
-            transform-origin: center center;
-        }
+        .board-wrapper { position: relative; display: inline-block; transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1); transform-origin: center center; }
+        .board-img { max-width: 100%; max-height: 78vh; display: block; opacity: 0.8; }
 
-        /* Imagem sem cortes (sem object-fit cover) */
-        .board-img { 
-            max-width: 100%; 
-            max-height: 75vh; 
-            display: block; 
-            opacity: 0.8; 
-        }
-
-        .hotspot {
-            position: absolute;
-            background: rgba(34, 211, 238, 0.2);
-            border: 2px solid var(--accent);
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.3s;
-            display: none;
-        }
-
+        /* Hotspots */
+        .hotspot { position: absolute; background: rgba(34, 211, 238, 0.05); border: 2px solid var(--accent); border-radius: 4px; cursor: pointer; transition: 0.3s; z-index: 10; display: none;}
+        
         .board-wrapper.ready .hotspot { display: block; }
-        .hotspot:hover, .hotspot.active {
-            background: rgba(244, 114, 182, 0.4);
-            border-color: var(--highlight);
-            box-shadow: 0 0 15px var(--highlight);
-            z-index: 100;
+
+        /* Estilo Estudo */
+        .viewport:not(.exam-active) .hotspot:hover, 
+        .viewport:not(.exam-active) .hotspot.active { 
+            background: rgba(34, 211, 238, 0.3); 
+            border-color: var(--accent); 
+            box-shadow: 0 0 15px var(--accent); 
+            z-index: 100; 
         }
 
-        .placeholder { text-align: center; color: var(--border-ui); position: absolute; }
-
-        .tooltip {
-            position: absolute;
-            box-sizing: border-box; 
-            background: rgba(15, 23, 42, 0.92);
-            border: 1px solid var(--accent);
-            border-radius: 12px;
-            padding: 20px;
-            width: 340px;
-            z-index: 200;
-            display: none;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(34, 211, 238, 0.2);
-            transform: translateY(-100%);
-            pointer-events: none; 
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* Estilos Modo Prova (Feedback) */
+        .hotspot.correct-flash { background: rgba(74, 222, 128, 0.6) !important; border-color: var(--correct) !important; box-shadow: 0 0 25px var(--correct) !important; z-index: 101;}
+        .hotspot.wrong-flash { background: rgba(239, 68, 68, 0.6) !important; border-color: var(--wrong) !important; box-shadow: 0 0 25px var(--wrong) !important; z-index: 101;}
+        
+        /* Deixa as peças invisíveis durante a prova para aumentar a dificuldade */
+        .viewport.exam-active .hotspot:not(.correct-flash):not(.wrong-flash) {
+            border-color: transparent;
+            background: transparent;
+        }
+        .viewport.exam-active .hotspot:hover:not(.correct-flash):not(.wrong-flash) {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        @keyframes popIn {
-            from { opacity: 0; transform: translateY(-90%) scale(0.8); }
-            to { opacity: 1; transform: translateY(-100%) scale(1); }
-        }
+        .placeholder { text-align: center; color: var(--border-ui); position: absolute; z-index: 0;}
 
-        .tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: var(--arrow-pos, 50%); 
-            margin-left: -10px;
-            border-width: 10px;
-            border-style: solid;
-            border-color: rgba(15, 23, 42, 0.92) transparent transparent transparent;
-            transition: left 0.3s ease; 
-        }
-
-        .tooltip.bottom-arrow {
-            transform: translateY(0);
-            animation: popInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popInBottom {
-            from { opacity: 0; transform: translateY(10%) scale(0.8); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .tooltip.bottom-arrow::after {
-            top: -20px;
-            border-color: transparent transparent rgba(15, 23, 42, 0.92) transparent;
-        }
-
+        /* Tooltip Premium */
+        .tooltip { position: absolute; box-sizing: border-box; background: rgba(15, 23, 42, 0.94); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; width: 340px; z-index: 200; display: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(-100%); pointer-events: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { opacity: 0; transform: translateY(-90%) scale(0.8); } to { opacity: 1; transform: translateY(-100%) scale(1); } }
+        .tooltip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-pos, 50%); margin-left: -10px; border-width: 10px; border-style: solid; border-color: rgba(15, 23, 42, 0.94) transparent transparent transparent; transition: left 0.3s ease; }
+        .tooltip.bottom-arrow { transform: translateY(0); animation: popInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popInBottom { from { opacity: 0; transform: translateY(10%) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .tooltip.bottom-arrow::after { top: -20px; border-color: transparent transparent rgba(15, 23, 42, 0.94) transparent; }
+        
         .tooltip h2 { color: var(--accent); margin: 0 0 10px 0; font-size: 1.4em; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
         .tooltip .section { margin-top: 12px; }
         .tooltip .label { color: var(--accent); font-weight: bold; text-transform: uppercase; font-size: 0.75em; display: block; margin-bottom: 4px; }
-        .tooltip .curiosity .label { color: var(--highlight); }
         .tooltip p { margin: 0; font-size: 0.9em; line-height: 1.5; color: #cbd5e1; }
 
-        /* ==========================================================
-           AGORA ESSES VALORES VÃO OBEDECER MILIMETRICAMENTE O RADAR!
-           ========================================================== */
+        /* ====== PAINEL DO MODO PROVA ====== */
+        .exam-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid var(--border-ui);
+            border-radius: 16px;
+            padding: 20px;
+            width: 300px;
+            z-index: 150;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: none;
+            animation: slideInRight 0.5s ease;
+        }
+
+        @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .exam-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-ui); padding-bottom: 10px; margin-bottom: 15px; }
+        .exam-title { font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 1px; font-size: 0.9em;}
+        .exam-score { font-size: 1.2em; font-weight: 900; color: var(--correct); font-family: monospace; background: rgba(74, 222, 128, 0.1); padding: 4px 8px; border-radius: 6px;}
+
+        /* Telas da Prova */
+        #exam-intro, #exam-active-area, #exam-result { display: none; text-align: center; }
+        
+        .question-label { color: #94a3b8; font-size: 0.85em; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: bold;}
+        .question-text { color: #fff; font-size: 1.4em; font-weight: 700; line-height: 1.3; min-height: 50px;}
+
+        .exam-feedback { margin-top: 15px; font-weight: bold; min-height: 1.5em; font-size: 1.1em; border-radius: 6px; padding: 5px;}
+
+        .btn-exam { width: 100%; margin-top: 15px; background: var(--correct); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
+        .btn-exam:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-exam.secondary { background: #334155; color: #fff; }
+
+        /* Progress Bar */
+        .progress-bar { width: 100%; height: 6px; background: #1e293b; border-radius: 3px; margin-top: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+
+        /* Mapeamento (Exemplos simplificados) */
         #h-cpu    { top: 25%; left: 32%; width: 22%; height: 18%; }
         #h-ram    { top: 18%; left: 66%; width: 14%; height: 46%; }
         #h-atx    { top: 29%; left: 81%; width: 5%; height: 19%; }
@@ -207,19 +189,21 @@
 </head>
 <body>
 
-    <div id="radar">Radar: Passe o mouse na placa</div>
-
     <div class="header">
-        <h1>Anatomia de Hardware [Nível Total]</h1>
-        <p>Estudo dissecado de componentes e arquitetura</p>
+        <h1>HardwareLab <span style="color:var(--correct); font-weight:900">PRO</span></h1>
+        <p>Laboratório Interativo de Arquitetura de Computadores</p>
     </div>
 
-    <div class="controls">
-        <label class="btn-action">
-            📁 CARREGAR FOTO DA PLACA
-            <input type="file" id="loader" style="display: none;" accept="image/*">
+    <div class="controls-bar">
+        <label class="btn-loader">
+            📷 CARREGAR PLACA-MÃE
+            <input type="file" id="loader-base" style="display: none;" accept="image/*">
         </label>
-        <button class="btn-action" style="background: var(--highlight);" onclick="resetZoom()">🔍 VISÃO GLOBAL</button>
+        
+        <div class="modes-group">
+            <button class="mode-switch active" data-mode="study" onclick="setMode('study')">🔍 MODO ESTUDO</button>
+            <button class="mode-switch" data-mode="exam" onclick="setMode('exam')">📝 MODO PROVA</button>
+        </div>
     </div>
 
     <div class="main-container">
@@ -227,24 +211,24 @@
             <div class="placeholder" id="hint">⚠️ Aguardando carregamento da imagem...</div>
             
             <div class="board-wrapper" id="wrapper">
-                <img id="view-img" class="board-img" src="">
+                <img id="view-img-base" class="board-img base" src="">
                 
-                <div id="h-cpu" class="hotspot" onclick="explore('cpu', event)"></div>
-                <div id="h-ram" class="hotspot" onclick="explore('ram', event)"></div>
-                <div id="h-atx" class="hotspot" onclick="explore('atx', event)"></div>
-                <div id="h-chip" class="hotspot" onclick="explore('chip', event)"></div>
-                <div id="h-pcie" class="hotspot" onclick="explore('pcie', event)"></div>
-                <div id="h-pci" class="hotspot" onclick="explore('pci', event)"></div>
-                <div id="h-bat" class="hotspot" onclick="explore('bat', event)"></div>
-                <div id="h-sata" class="hotspot" onclick="explore('sata', event)"></div>
-                <div id="h-io" class="hotspot" onclick="explore('io', event)"></div>
-                <div id="h-cpupwr" class="hotspot" onclick="explore('cpupwr', event)"></div>
-                <div id="h-ide" class="hotspot" onclick="explore('ide', event)"></div>
-                <div id="h-caps" class="hotspot" onclick="explore('caps', event)"></div>
-                <div id="h-traces" class="hotspot" onclick="explore('traces', event)"></div>
-                <div id="h-front" class="hotspot" onclick="explore('front', event)"></div>
-                <div id="h-choke" class="hotspot" onclick="explore('choke', event)"></div>
-                <div id="h-usb" class="hotspot" onclick="explore('usb', event)"></div>
+                <div id="h-cpu" class="hotspot" onclick="handleHotspotClick('cpu', event)"></div>
+                <div id="h-ram" class="hotspot" onclick="handleHotspotClick('ram', event)"></div>
+                <div id="h-atx" class="hotspot" onclick="handleHotspotClick('atx', event)"></div>
+                <div id="h-chip" class="hotspot" onclick="handleHotspotClick('chip', event)"></div>
+                <div id="h-pcie" class="hotspot" onclick="handleHotspotClick('pcie', event)"></div>
+                <div id="h-pci" class="hotspot" onclick="handleHotspotClick('pci', event)"></div>
+                <div id="h-bat" class="hotspot" onclick="handleHotspotClick('bat', event)"></div>
+                <div id="h-sata" class="hotspot" onclick="handleHotspotClick('sata', event)"></div>
+                <div id="h-io" class="hotspot" onclick="handleHotspotClick('io', event)"></div>
+                <div id="h-cpupwr" class="hotspot" onclick="handleHotspotClick('cpupwr', event)"></div>
+                <div id="h-ide" class="hotspot" onclick="handleHotspotClick('ide', event)"></div>
+                <div id="h-caps" class="hotspot" onclick="handleHotspotClick('caps', event)"></div>
+                <div id="h-traces" class="hotspot" onclick="handleHotspotClick('traces', event)"></div>
+                <div id="h-front" class="hotspot" onclick="handleHotspotClick('front', event)"></div>
+                <div id="h-choke" class="hotspot" onclick="handleHotspotClick('choke', event)"></div>
+                <div id="h-usb" class="hotspot" onclick="handleHotspotClick('usb', event)"></div>
             </div>
 
             <div class="tooltip" id="tooltip">
@@ -254,52 +238,53 @@
                     <p id="t-func"></p>
                 </div>
                 <div class="section curiosity">
-                    <span class="label">Curiosidade de Aula 💡</span>
+                    <span class="label" style="color: #f472b6;">Curiosidade de Aula 💡</span>
                     <p id="t-curio"></p>
                 </div>
+            </div>
+        </div>
+
+        <div class="exam-panel" id="exam-panel">
+            <div class="exam-header">
+                <span class="exam-title">AVALIAÇÃO</span>
+                <span class="exam-score" id="exam-score">000</span>
+            </div>
+
+            <div id="exam-intro" style="display: block;">
+                <p style="color: #cbd5e1; font-size: 0.9em; margin-bottom: 20px;">Teste seus conhecimentos. Encontre 10 peças na placa-mãe sem a ajuda do zoom.</p>
+                <button class="btn-exam" onclick="startExam()">▶️ INICIAR PROVA</button>
+            </div>
+
+            <div id="exam-active-area">
+                <span class="question-label" id="q-counter">Questão 1 de 10</span>
+                <div class="question-text" id="question-text">Preparando...</div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                <div id="exam-feedback" class="exam-feedback"></div>
+            </div>
+
+            <div id="exam-result">
+                <h2 style="color: #fff; margin: 0 0 10px 0;">Fim de Jogo!</h2>
+                <p style="color: #94a3b8; font-size: 0.9em;">Seu placar final foi:</p>
+                <div style="font-size: 3em; font-weight: 900; color: var(--correct); margin-bottom: 20px;" id="final-score-display">100</div>
+                <button class="btn-exam" onclick="startExam()">🔄 JOGAR NOVAMENTE</button>
+                <button class="btn-exam secondary" onclick="setMode('study')">⬅️ VOLTAR AO ESTUDO</button>
             </div>
         </div>
     </div>
 
     <script>
-        const wrapper = document.getElementById('wrapper');
-        const radar = document.getElementById('radar');
-        
-        wrapper.addEventListener('mousemove', function(e) {
-            const rect = wrapper.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-            
-            if (wrapper.style.transform === "" || wrapper.style.transform === "scale(1)") {
-                radar.innerHTML = `Mapeamento<br>left: ${x.toFixed(1)}%<br>top: ${y.toFixed(1)}%`;
-            }
-        });
-
-        const loader = document.getElementById('loader');
-        loader.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    document.getElementById('view-img').src = ev.target.result;
-                    document.getElementById('wrapper').classList.add('ready');
-                    document.getElementById('hint').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
+        // --- DADOS ---
         const data = {
             cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa para conversar com todas as outras peças.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
             ram: { name: "Slots de Memória RAM", func: "A 'mesa de trabalho'. É aqui que o PC guarda o que você está usando AGORA.", curio: "As cores laranjas indicam o 'Dual Channel'." },
-            atx: { name: "Conector de Força", func: "A 'boca' da placa-mãe. É por onde a comida (eletricidade) da fonte chega.", curio: "Cada fio colorido que encaixa aqui traz uma 'voltagem' diferente." },
+            atx: { name: "Conector de Força ATX", func: "A 'boca' da placa-mãe. É por onde a comida (eletricidade) da fonte chega.", curio: "Cada fio colorido que encaixa aqui traz uma 'voltagem' diferente." },
             chip: { name: "Chipset (Southbridge)", func: "O 'Gerente'. Ele cuida das tarefas chatas (USB, Teclado, HD).", curio: "Aquele chip preto da Intel esquenta tanto que usa um 'chapéu' de alumínio." },
             pcie: { name: "Slot PCI Express x16", func: "A 'Pista de Corrida'. É o caminho mais rápido da placa, usado para as Placas de Vídeo.", curio: "Essa pista é serial. Ela manda dados em altíssima velocidade." },
             pci: { name: "Slot PCI Tradicional", func: "Uma 'estrada antiga'. Servia para colocar placas de som ou internet no passado.", curio: "Esse barramento é 'paralelo'. Ele tenta mandar vários dados ao mesmo tempo." },
             bat: { name: "Bateria CMOS", func: "O 'Relógio de Pulso'. Mantém a hora e a data certas.", curio: "Se ela acabar, seu PC vai achar que ainda está no ano de 2005 toda vez que ligar!" },
             sata: { name: "Portas SATA", func: "A 'Entrada do Arquivo'. É por aqui que os arquivos saem do HD.", curio: "O SATA permite que você conecte um HD com o PC ligado (Hot Swap)." },
             io: { name: "Painel Traseiro (E/S)", func: "A 'Fronteira'. É onde o mundo externo se conecta com a placa.", curio: "Cada cor ali tem um sentido: azul é vídeo, as outras são áudio e rede." },
-            cpupwr: { name: "Energia da CPU", func: "O 'Lanche VIP'. O processador precisa de um cabo só para ele.", curio: "Se você esquecer de ligar, o PC liga as ventoinhas mas a tela fica preta!" },
+            cpupwr: { name: "Energia da CPU (EPS)", func: "O 'Lanche VIP'. O processador precisa de um cabo só para ele.", curio: "Se você esquecer de ligar, o PC liga as ventoinhas mas a tela fica preta!" },
             ide: { name: "Conector IDE", func: "O 'Tataravô' do SATA. Usava cabos fita largos.", curio: "Ótimo para recuperar arquivos de PCs de 15 anos atrás." },
             caps: { name: "Capacitores", func: "As 'Caixas d'Água'. Guardam energia e soltam devagarinho.", curio: "Se esses cilindrinhos 'estufarem' ou vazarem, a placa-mãe morre." },
             traces: { name: "Trilhas de Circuito", func: "As 'Ruas de Cobre'. Fios achatados que levam os dados entre as peças.", curio: "Feitas de cobre puro e cobertas por verniz azul para não enferrujarem." },
@@ -308,16 +293,72 @@
             usb: { name: "Cabeçalhos USB", func: "O 'Extensor'. Liga aquelas portas USB da frente do gabinete.", curio: "Cada porta USB amarela consegue alimentar um celular de forma independente." }
         };
 
-        // Note que agora o JavaScript também calcula o zoom baseado em onde você clicou
+        // --- CARREGADOR DE IMAGEM ---
+        let isLoaded = false;
+        document.getElementById('loader-base').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('view-img-base').src = ev.target.result;
+                    document.getElementById('wrapper').classList.add('ready');
+                    document.getElementById('hint').style.display = 'none';
+                    isLoaded = true;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- GERENCIAMENTO DE MODOS ---
+        let currentMode = 'study'; // 'study' ou 'exam'
+
+        function setMode(mode) {
+            if (!isLoaded) { 
+                document.getElementById('hint').style.color = "#ef4444"; 
+                document.getElementById('hint').innerText = "⚠️ Carregue a imagem da Placa-Mãe primeiro!";
+                return; 
+            }
+            
+            currentMode = mode;
+            resetZoom(); // Esconde tooltip e tira zoom
+            
+            // Troca visual dos botões
+            document.querySelectorAll('.mode-switch').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.mode-switch[data-mode="${mode}"]`).classList.add('active');
+
+            const viewport = document.getElementById('viewport');
+            const examPanel = document.getElementById('exam-panel');
+
+            if (mode === 'study') {
+                viewport.classList.remove('exam-active');
+                examPanel.style.display = 'none';
+                examActive = false;
+            } else if (mode === 'exam') {
+                viewport.classList.add('exam-active');
+                examPanel.style.display = 'block';
+                document.getElementById('exam-intro').style.display = 'block';
+                document.getElementById('exam-active-area').style.display = 'none';
+                document.getElementById('exam-result').style.display = 'none';
+                document.getElementById('exam-score').innerText = "000";
+            }
+        }
+
+        // --- SISTEMA DE CLIQUES ---
+        function handleHotspotClick(id, event) {
+            if (currentMode === 'study') {
+                explore(id, event);
+            } else if (currentMode === 'exam') {
+                checkAnswer(id);
+            }
+        }
+
+        // --- MODO ESTUDO: TOOLTIP ---
         function explore(id, event) {
             const wrap = document.getElementById('wrapper');
             const tooltip = document.getElementById('tooltip');
             const viewport = document.getElementById('viewport');
-            const radarBox = document.getElementById('radar');
             
-            radarBox.style.opacity = '0.3'; 
-
-            // Zoom automático exato onde você clicou
+            // Zoom
             const rect = wrap.getBoundingClientRect();
             const clickPercentX = ((event.clientX - rect.left) / rect.width) * 100;
             const clickPercentY = ((event.clientY - rect.top) / rect.height) * 100;
@@ -325,11 +366,13 @@
             wrap.style.transformOrigin = `${clickPercentX}% ${clickPercentY}%`;
             wrap.style.transform = "scale(2.3)";
             
+            // Textos
             const item = data[id];
             document.getElementById('t-name').innerText = item.name;
             document.getElementById('t-func').innerText = item.func;
             document.getElementById('t-curio').innerText = item.curio;
             
+            // Posicionamento inteligente (Colisão)
             const vpRect = viewport.getBoundingClientRect();
             let clickX = event.clientX - vpRect.left;
             let clickY = event.clientY - vpRect.top;
@@ -354,8 +397,7 @@
             if (leftPos < 20) {
                 leftPos = 20; 
                 arrowPos = ((clickX - leftPos) / tooltipWidth) * 100; 
-            } 
-            else if (leftPos + tooltipWidth > vpWidth - 20) {
+            } else if (leftPos + tooltipWidth > vpWidth - 20) {
                 leftPos = vpWidth - tooltipWidth - 20; 
                 arrowPos = ((clickX - leftPos) / tooltipWidth) * 100;
             }
@@ -372,14 +414,130 @@
         function resetZoom() {
             const wrap = document.getElementById('wrapper');
             const tooltip = document.getElementById('tooltip');
-            const radarBox = document.getElementById('radar');
-            
             wrap.style.transform = "scale(1)";
             tooltip.style.display = 'none';
-            radarBox.style.opacity = '1';
-            
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
+            document.querySelectorAll('.hotspot').forEach(h => {
+                h.classList.remove('active', 'correct-flash', 'wrong-flash');
+            });
         }
+
+        // --- MODO PROVA: LÓGICA DO JOGO ---
+        const MAX_QUESTIONS = 10;
+        let score = 0;
+        let askedQuestions = [];
+        let currentTargetId = "";
+        let examActive = false;
+        let clickLocked = false; // Trava cliques enquanto processa a resposta
+
+        function startExam() {
+            if (!isLoaded) return;
+            score = 0;
+            askedQuestions = [];
+            clickLocked = false;
+            examActive = true;
+            
+            updateScoreUI();
+            
+            // Alterna Telas do Painel
+            document.getElementById('exam-intro').style.display = 'none';
+            document.getElementById('exam-result').style.display = 'none';
+            document.getElementById('exam-active-area').style.display = 'block';
+            
+            resetZoom();
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (askedQuestions.length >= MAX_QUESTIONS) {
+                endGame();
+                return;
+            }
+
+            // Sorteia uma peça que ainda não foi perguntada
+            const allKeys = Object.keys(data);
+            const availableKeys = allKeys.filter(k => !askedQuestions.includes(k));
+            currentTargetId = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+            
+            askedQuestions.push(currentTargetId);
+
+            // Atualiza UI
+            document.getElementById('q-counter').innerText = `Questão ${askedQuestions.length} de ${MAX_QUESTIONS}`;
+            document.getElementById('question-text').innerText = data[currentTargetId].name;
+            
+            const feedbackEl = document.getElementById('exam-feedback');
+            feedbackEl.innerText = "Aguardando seu clique...";
+            feedbackEl.style.color = "#94a3b8";
+            feedbackEl.style.backgroundColor = "transparent";
+
+            // Atualiza barra de progresso
+            const progress = ((askedQuestions.length - 1) / MAX_QUESTIONS) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            
+            clickLocked = false; // Libera o clique do aluno
+        }
+
+        function checkAnswer(clickedId) {
+            if (!examActive || clickLocked) return;
+            clickLocked = true; // Impede duplos cliques
+
+            const feedbackEl = document.getElementById('exam-feedback');
+            const clickedEl = document.getElementById('h-' + clickedId);
+            const correctEl = document.getElementById('h-' + currentTargetId);
+
+            // Reseta cores anteriores
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('correct-flash', 'wrong-flash'));
+
+            if (clickedId === currentTargetId) {
+                // ACERTOU
+                score += 10;
+                clickedEl.classList.add('correct-flash');
+                feedbackEl.innerText = "CERTO! +10 pontos";
+                feedbackEl.style.color = "#000";
+                feedbackEl.style.backgroundColor = "#4ade80"; // Verde
+            } else {
+                // ERROU
+                clickedEl.classList.add('wrong-flash');
+                correctEl.classList.add('correct-flash'); // Pisca a certa pra ensinar
+                feedbackEl.innerText = "ERRADO! Sem pontos.";
+                feedbackEl.style.color = "#fff";
+                feedbackEl.style.backgroundColor = "#ef4444"; // Vermelho
+            }
+
+            updateScoreUI();
+
+            // Aguarda 2 segundos para o aluno ver o feedback antes de pular
+            setTimeout(() => {
+                clickedEl.classList.remove('correct-flash', 'wrong-flash');
+                correctEl.classList.remove('correct-flash');
+                nextQuestion();
+            }, 2000);
+        }
+
+        function endGame() {
+            examActive = false;
+            document.getElementById('progress-fill').style.width = '100%';
+            
+            setTimeout(() => {
+                document.getElementById('exam-active-area').style.display = 'none';
+                document.getElementById('exam-result').style.display = 'block';
+                document.getElementById('final-score-display').innerText = score;
+                
+                // Muda a cor do placar final dependendo do desempenho
+                const finalScoreEl = document.getElementById('final-score-display');
+                if(score >= 80) finalScoreEl.style.color = "#4ade80"; // Verde
+                else if(score >= 50) finalScoreEl.style.color = "#eab308"; // Amarelo
+                else finalScoreEl.style.color = "#ef4444"; // Vermelho
+            }, 500);
+        }
+
+        function updateScore() {
+            // Formata com zeros (ex: 040)
+            document.getElementById('exam-score').innerText = String(score).padStart(3, '0');
+        }
+        
+        // Alias para updateScore (compatibilidade interna)
+        function updateScoreUI() { updateScore(); }
+
     </script>
 </body>
 </html>
