@@ -3,83 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HardwareLab Pro: Avaliação e Certificação</title>
+    <title>HardwareLab Pro: Estudo e Quebra-Cabeça</title>
     <style>
         :root {
             --bg-dark: #020617;
             --panel-bg: #0f172a;
             --text-main: #f1f5f9;
             --accent: #22d3ee;
-            --correct: #4ade80;
-            --wrong: #ef4444;
+            --puzzle: #c084fc;
+            --external: #3b82f6;
             --border-ui: #334155;
+            
+            /* Variáveis pro Quebra Cabeça */
+            --board-w: 600px;
+            --board-h: 400px;
         }
 
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden;}
 
-        /* Interface High-Tech */
         .header { text-align: center; margin-bottom: 20px; }
         .header h1 { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin: 0; font-size: 2em; }
         
         /* Barra de Controles */
         .controls-bar {
-            background: var(--panel-bg);
-            padding: 10px 25px;
-            border-radius: 50px;
-            border: 1px solid var(--border-ui);
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            box-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
-            z-index: 10;
+            background: var(--panel-bg); padding: 10px 25px; border-radius: 50px;
+            border: 1px solid var(--border-ui); margin-bottom: 20px; display: flex; gap: 15px; align-items: center;
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.1); z-index: 10;
         }
 
         .mode-switch {
-            background: none;
-            color: #64748b;
-            border: 2px solid #64748b;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 0.8em;
-            cursor: pointer;
-            transition: 0.3s;
-            letter-spacing: 1px;
+            background: none; color: #64748b; border: 2px solid #64748b; padding: 8px 20px;
+            border-radius: 20px; font-weight: 800; text-transform: uppercase; font-size: 0.8em;
+            cursor: pointer; transition: 0.3s; letter-spacing: 1px; text-decoration: none;
         }
 
         .mode-switch.active[data-mode="study"] { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
-        .mode-switch.active[data-mode="exam"] { color: #000; border-color: var(--correct); background: var(--correct); }
+        .mode-switch.active[data-mode="puzzle"] { color: #000; border-color: var(--puzzle); background: var(--puzzle); box-shadow: 0 0 15px rgba(192, 132, 252, 0.4); }
+        
+        /* Botão de Link Externo */
+        .mode-switch.ext-link { color: #fff; background: var(--external); border-color: var(--external); display: flex; align-items: center;}
+        .mode-switch.ext-link:hover { filter: brightness(1.2); transform: scale(1.05); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);}
 
-        /* Viewport e Imagens */
         .main-container { display: flex; width: 100%; max-width: 1200px; justify-content: center; position: relative;}
 
         .viewport {
-            position: relative;
-            width: 100%;
-            height: 78vh;
-            min-height: 600px;
-            overflow: hidden;
-            border: 2px solid var(--border-ui);
-            border-radius: 16px;
-            background: #000;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
+            position: relative; width: 100%; height: 78vh; min-height: 600px; overflow: hidden;
+            border: 2px solid var(--border-ui); border-radius: 16px; background: #000;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
         }
 
+        /* Placa e Hotspots */
         .board-wrapper { position: relative; display: inline-block; transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1); transform-origin: center center; }
         .board-img { max-width: 100%; max-height: 78vh; display: block; opacity: 0.8; }
 
-        /* Hotspots */
         .hotspot { position: absolute; background: rgba(34, 211, 238, 0.05); border: 2px solid var(--accent); border-radius: 4px; cursor: pointer; transition: 0.3s; z-index: 10; display: none;}
         .board-wrapper.ready .hotspot { display: block; }
-
-        .viewport:not(.exam-active) .hotspot:hover, 
-        .viewport:not(.exam-active) .hotspot.active { background: rgba(34, 211, 238, 0.3); border-color: var(--accent); box-shadow: 0 0 15px var(--accent); z-index: 100; }
-
-        .hotspot.correct-flash { background: rgba(74, 222, 128, 0.6) !important; border-color: var(--correct) !important; box-shadow: 0 0 25px var(--correct) !important; z-index: 101;}
-        .hotspot.wrong-flash { background: rgba(239, 68, 68, 0.6) !important; border-color: var(--wrong) !important; box-shadow: 0 0 25px var(--wrong) !important; z-index: 101;}
-        .viewport.exam-active .hotspot:not(.correct-flash):not(.wrong-flash) { border-color: transparent; background: transparent; }
+        .viewport .hotspot:hover, .viewport .hotspot.active { background: rgba(34, 211, 238, 0.3); border-color: var(--accent); box-shadow: 0 0 15px var(--accent); z-index: 100; }
 
         /* Tooltip Premium */
         .tooltip { position: absolute; box-sizing: border-box; background: rgba(15, 23, 42, 0.94); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; width: 340px; z-index: 200; display: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(-100%); pointer-events: none; }
@@ -91,88 +70,71 @@
         .tooltip .label { color: var(--accent); font-weight: bold; text-transform: uppercase; font-size: 0.75em; display: block; margin-bottom: 4px; }
         .tooltip p { margin: 0; font-size: 0.9em; line-height: 1.5; color: #cbd5e1; }
 
-        /* Painel de Prova */
-        .exam-panel {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(15, 23, 42, 0.95);
-            border: 2px solid var(--border-ui);
-            border-radius: 16px; padding: 20px; width: 300px; z-index: 150;
-            backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            display: none; animation: slideInRight 0.5s ease;
-        }
-
-        @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        .exam-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-ui); padding-bottom: 10px; margin-bottom: 15px; }
-        .exam-title { font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 1px; font-size: 0.9em;}
-        .exam-score { font-size: 1.2em; font-weight: 900; color: var(--correct); font-family: monospace; background: rgba(74, 222, 128, 0.1); padding: 4px 8px; border-radius: 6px;}
-
-        #exam-intro, #exam-active-area, #exam-result { display: none; text-align: center; }
-        .question-label { color: #94a3b8; font-size: 0.85em; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: bold;}
-        .question-text { color: #fff; font-size: 1.4em; font-weight: 700; line-height: 1.3; min-height: 50px;}
-        .exam-feedback { margin-top: 15px; font-weight: bold; min-height: 1.5em; font-size: 1.1em; border-radius: 6px; padding: 5px;}
-        
-        /* Inputs e Botões */
-        .student-input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--accent); background: #1e293b; color: #fff; text-align: center; font-weight: bold;}
-        .student-input:focus { outline: none; box-shadow: 0 0 10px var(--accent); }
-        
-        .btn-exam { width: 100%; margin-top: 10px; background: var(--correct); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
-        .btn-exam:hover { transform: scale(1.02); filter: brightness(1.1); }
-        .btn-exam.secondary { background: #334155; color: #fff; }
-        .btn-exam.print { background: #3b82f6; color: #fff; } 
-
-        /* Barra de Progresso */
-        .progress-bar { width: 100%; height: 6px; background: #1e293b; border-radius: 3px; margin-top: 15px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+        /* Mapeamento dos Componentes */
+        #h-cpu { top: 25%; left: 32%; width: 22%; height: 18%; }
+        #h-ram { top: 18%; left: 66%; width: 14%; height: 46%; }
+        #h-atx { top: 29%; left: 81%; width: 5%; height: 19%; }
+        #h-chip { top: 72%; left: 67%; width: 14%; height: 11%; }
+        #h-pcie { top: 66%; left: 30%; width: 35%; height: 5%; }
+        #h-pci { top: 79%; left: 28%; width: 36%; height: 5%; }
+        #h-bat { top: 51%; left: 27%; width: 8%; height: 7%; }
+        #h-sata { top: 84%; left: 63%; width: 15%; height: 5%; }
+        #h-io { top: 15%; left: 10%; width: 13%; height: 48%; }
+        #h-cpupwr { top: 22%; left: 14%; width: 7%; height: 7%; }
+        #h-ide { top: 68%; left: 80%; width: 4%; height: 21%; }
+        #h-caps { top: 31%; left: 24%; width: 6%; height: 15%; }
+        #h-traces { top: 50%; left: 45%; width: 10%; height: 10%; border-radius: 50%; }
+        #h-front { top: 85%; left: 78%; width: 10%; height: 5%; }
+        #h-choke { top: 27%; left: 43%; width: 5%; height: 5%; }
+        #h-usb { top: 85%; left: 47%; width: 12%; height: 4%; }
 
         /* =========================================================
-           ÁREA DO CERTIFICADO (SÓ APARECE QUANDO O ALUNO IMPRIME)
+           CSS DO QUEBRA-CABEÇA
            ========================================================= */
-        #certificate-area { display: none; } 
+        #puzzle-view { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        
+        #puzzle-menu { text-align: center; background: rgba(15, 23, 42, 0.8); padding: 30px; border-radius: 16px; border: 1px solid var(--puzzle); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        .diff-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-diff { background: #1e293b; color: #fff; border: 1px solid var(--puzzle); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-diff:hover { background: var(--puzzle); color: #000; transform: translateY(-2px);}
 
-        @media print {
-            body > *:not(#certificate-area) { display: none !important; }
-            body { background: white !important; padding: 0; margin: 0; }
-            
-            #certificate-area {
-                display: flex !important;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                width: 100vw;
-                height: 100vh;
-                color: #000 !important;
-                font-family: 'Segoe UI', sans-serif;
-                border: 15px solid #0f172a;
-                padding: 40px;
-                box-sizing: border-box;
-            }
-            .cert-title { font-size: 40px; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; font-weight: 900; }
-            .cert-subtitle { font-size: 20px; color: #64748b; margin-bottom: 40px; }
-            .cert-name { font-size: 45px; color: #22d3ee; border-bottom: 2px solid #22d3ee; padding-bottom: 10px; margin-bottom: 30px; width: 80%; text-transform: uppercase; font-weight: bold;}
-            .cert-text { font-size: 22px; margin-bottom: 20px; }
-            .cert-score { font-size: 60px; font-weight: 900; color: #4ade80; margin: 20px 0; }
-            .cert-footer { margin-top: 50px; font-size: 16px; color: #64748b; border-top: 1px solid #ccc; padding-top: 20px; width: 60%; }
+        #puzzle-game-area { display: none; width: 100%; max-width: 1000px; gap: 30px; justify-content: center; align-items: flex-start;}
+        
+        .puzzle-hud { display: flex; justify-content: space-between; width: 100%; max-width: var(--board-w); margin-bottom: 15px; font-weight: bold; font-size: 1.2em; color: var(--puzzle); background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 8px; box-sizing: border-box;}
+        
+        #board-container { width: var(--board-w); height: var(--board-h); border: 2px solid var(--puzzle); background: #0f172a; position: relative; display: grid; box-shadow: 0 0 20px rgba(192, 132, 252, 0.2);}
+        .puzzle-slot { border: 1px dashed #334155; box-sizing: border-box; width: 100%; height: 100%; }
+        .puzzle-slot.drag-over { background: rgba(192, 132, 252, 0.3); border-color: var(--puzzle); }
+
+        #pieces-bank { width: 300px; height: var(--board-h); background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 10px; box-sizing: border-box; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; justify-content: center;}
+        
+        .puzzle-piece {
+            background-image: url('IMG_0040.jpeg');
+            background-repeat: no-repeat;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
         }
+        .puzzle-piece:active { cursor: grabbing; transform: scale(0.95); z-index: 100;}
+        .puzzle-slot .puzzle-piece { box-shadow: none; }
 
-        /* Mapeamento dos Componentes (Insira as porcentagens da sua placa aqui) */
-        #h-cpu    { top: 25%; left: 32%; width: 22%; height: 18%; }
-        #h-ram    { top: 18%; left: 66%; width: 14%; height: 46%; }
-        #h-atx    { top: 29%; left: 81%; width: 5%; height: 19%; }
-        #h-chip   { top: 72%; left: 67%; width: 14%; height: 11%; }
-        #h-pcie   { top: 66%; left: 30%; width: 35%; height: 5%; }
-        #h-pci    { top: 79%; left: 28%; width: 36%; height: 5%; }
-        #h-bat    { top: 51%; left: 27%; width: 8%; height: 7%; }
-        #h-sata   { top: 84%; left: 63%; width: 15%; height: 5%; }
-        #h-io     { top: 15%; left: 10%; width: 13%; height: 48%; }
-        #h-cpupwr { top: 22%; left: 14%; width: 7%; height: 7%; }
-        #h-ide    { top: 68%; left: 80%; width: 4%; height: 21%; }
-        #h-caps   { top: 31%; left: 24%; width: 6%; height: 15%; }
-        #h-traces { top: 50%; left: 45%; width: 10%; height: 10%; border-radius: 50%; }
-        #h-front  { top: 85%; left: 78%; width: 10%; height: 5%; }
-        #h-choke  { top: 27%; left: 43%; width: 5%; height: 5%; }
-        #h-usb    { top: 85%; left: 47%; width: 12%; height: 4%; }
+        .student-input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--puzzle); background: #1e293b; color: #fff; text-align: center; font-weight: bold;}
+        .student-input:focus { outline: none; box-shadow: 0 0 10px var(--puzzle); }
+        
+        .btn-exam { width: 100%; margin-top: 10px; background: var(--puzzle); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
+        .btn-exam:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-exam.secondary { background: #334155; color: #fff; }
+
+        #puzzle-ranking { margin-top: 30px; width: 100%; max-width: 500px;}
+        .ranking-table { width: 100%; border-collapse: collapse; text-align: left; background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-ui);}
+        .ranking-table th { background: var(--puzzle); color: #000; padding: 10px; text-transform: uppercase; font-size: 0.9em; }
+        .ranking-table td { padding: 10px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+        .ranking-table tr:last-child td { border-bottom: none; }
+        .badge { background: #334155; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; }
+
+        /* Modal de Vitória */
+        #puzzle-win { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
+        #puzzle-win h1 { color: var(--puzzle); font-size: 3em; margin: 0;}
     </style>
 </head>
 <body>
@@ -184,11 +146,14 @@
 
     <div class="controls-bar">
         <button class="mode-switch active" data-mode="study" onclick="setMode('study')">🔍 MODO ESTUDO</button>
-        <button class="mode-switch" data-mode="exam" onclick="setMode('exam')">📝 MODO PROVA</button>
+        <button class="mode-switch" data-mode="puzzle" onclick="setMode('puzzle')">🧩 MODO QUEBRA-CABEÇA</button>
+        
+        <a href="COLOQUE_SEU_LINK_AQUI" target="_blank" class="mode-switch ext-link">📝 AVALIAÇÃO EXTERNA 🔗</a>
     </div>
 
     <div class="main-container">
         <div class="viewport" id="viewport">
+            
             <div class="board-wrapper" id="wrapper">
                 <img id="view-img-base" class="board-img base" src="IMG_0040.jpeg" alt="Placa-Mãe">
                 
@@ -215,241 +180,338 @@
                 <div class="section"><span class="label">O que é e o que faz?</span><p id="t-func"></p></div>
                 <div class="section curiosity"><span class="label" style="color: #f472b6;">Curiosidade 💡</span><p id="t-curio"></p></div>
             </div>
-        </div>
 
-        <div class="exam-panel" id="exam-panel">
-            <div class="exam-header">
-                <span class="exam-title">AVALIAÇÃO</span>
-                <span class="exam-score" id="exam-score">000</span>
-            </div>
-
-            <div id="exam-intro" style="display: block;">
-                <p style="color: #cbd5e1; font-size: 0.9em;">Identifique-se para validar seu teste:</p>
-                <input type="text" id="student-name" class="student-input" placeholder="Digite seu nome completo" autocomplete="off">
-                <button class="btn-exam" onclick="startExam()">▶️ INICIAR PROVA</button>
-            </div>
-
-            <div id="exam-active-area">
-                <span class="question-label" id="q-counter">Questão 1 de 10</span>
-                <div class="question-text" id="question-text">Preparando...</div>
-                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-                <div id="exam-feedback" class="exam-feedback"></div>
-            </div>
-
-            <div id="exam-result">
-                <h2 style="color: #fff; margin: 0 0 10px 0;">Fim de Jogo!</h2>
-                <p style="color: #94a3b8; font-size: 0.9em;">Seu placar final foi:</p>
-                <div style="font-size: 3.5em; font-weight: 900; margin-bottom: 20px;" id="final-score-display">100</div>
+            <div id="puzzle-view">
                 
-                <button class="btn-exam print" onclick="printCertificate()">🖨️ GERAR CERTIFICADO PDF</button>
-                <button class="btn-exam" onclick="resetExamUI()">🔄 JOGAR NOVAMENTE</button>
-                <button class="btn-exam secondary" onclick="setMode('study')">⬅️ SAIR DA PROVA</button>
-            </div>
-        </div>
-    </div>
+                <div id="puzzle-menu">
+                    <h2 style="color: var(--puzzle); margin-top: 0; font-size: 2em;">Montagem de Hardware</h2>
+                    <p style="color: #94a3b8; margin-bottom: 20px;">Reconstrua a placa-mãe o mais rápido possível!</p>
+                    
+                    <input type="text" id="puzzle-player-name" class="student-input" placeholder="Digite seu nome (Obrigatório)" autocomplete="off">
+                    
+                    <div class="diff-buttons">
+                        <button class="btn-diff" onclick="startPuzzle(3, 'Fácil')">FÁCIL (3x3)</button>
+                        <button class="btn-diff" onclick="startPuzzle(4, 'Médio')">MÉDIO (4x4)</button>
+                        <button class="btn-diff" onclick="startPuzzle(5, 'Difícil')">DIFÍCIL (5x5)</button>
+                    </div>
 
-    <div id="certificate-area">
-        <div class="cert-title">CERTIFICADO DE EXCELÊNCIA</div>
-        <div class="cert-subtitle">Laboratório de Arquitetura de Computadores</div>
-        <div class="cert-text">Certificamos com louvor que o(a) aluno(a)</div>
-        <div class="cert-name" id="cert-name-display">Nome do Aluno</div>
-        <div class="cert-text">concluiu a Avaliação Prática de Mapeamento de Hardware com a pontuação final de:</div>
-        <div class="cert-score" id="cert-score-display">100 / 100</div>
-        <div class="cert-text">Demonstrando alto nível de conhecimento em componentes e circuitos de placas-mãe.</div>
-        <div class="cert-footer">
-            Emitido pelo HardwareLab PRO em: <span id="cert-date-display"></span><br>
-            Autenticação Digital Interna
+                    <div id="puzzle-ranking">
+                        <h3 style="color: #fff; text-align: left; margin-bottom: 10px;">🏆 Top Montadores Locais</h3>
+                        <table class="ranking-table">
+                            <thead><tr><th>Nome</th><th>Nível</th><th>Tempo</th><th>Movs</th></tr></thead>
+                            <tbody id="ranking-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="puzzle-game-area">
+                    <div>
+                        <div class="puzzle-hud">
+                            <span>⏱️ <span id="puzzle-time">00:00</span></span>
+                            <span>🔄 Movimentos: <span id="puzzle-moves">0</span></span>
+                        </div>
+                        <div id="board-container"></div>
+                        <button class="btn-exam secondary" style="margin-top: 15px; width: auto; padding: 10px 30px;" onclick="quitPuzzle()">⬅️ DESISTIR E VOLTAR</button>
+                    </div>
+                    <div id="pieces-bank"></div>
+                </div>
+
+                <div id="puzzle-win">
+                    <h1>PLACA MONTADA!</h1>
+                    <p style="font-size: 1.2em; margin: 20px 0;">Tempo: <span id="win-time" style="color:var(--puzzle); font-weight:bold;"></span> | Movimentos: <span id="win-moves" style="color:var(--puzzle); font-weight:bold;"></span></p>
+                    <button class="btn-exam" style="width: 250px;" onclick="quitPuzzle()">VER RANKING</button>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <script>
         const data = {
-            cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa para conversar com todas as outras peças.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
+            cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
             ram: { name: "Slots de Memória RAM", func: "A 'mesa de trabalho'. É aqui que o PC guarda o que você está usando AGORA.", curio: "As cores laranjas indicam o 'Dual Channel'." },
             atx: { name: "Conector de Força ATX", func: "A 'boca' da placa-mãe. É por onde a comida (eletricidade) da fonte chega.", curio: "Cada fio colorido que encaixa aqui traz uma 'voltagem' diferente." },
             chip: { name: "Chipset (Southbridge)", func: "O 'Gerente'. Ele cuida das tarefas chatas (USB, Teclado, HD).", curio: "Aquele chip preto da Intel esquenta tanto que usa um 'chapéu' de alumínio." },
-            pcie: { name: "Slot PCI Express x16", func: "A 'Pista de Corrida'. É o caminho mais rápido da placa, usado para as Placas de Vídeo.", curio: "Essa pista é serial. Ela manda dados em altíssima velocidade." },
-            pci: { name: "Slot PCI Tradicional", func: "Uma 'estrada antiga'. Servia para colocar placas de som ou internet no passado.", curio: "Esse barramento é 'paralelo'. Ele tenta mandar vários dados ao mesmo tempo." },
-            bat: { name: "Bateria CMOS", func: "O 'Relógio de Pulso'. Mantém a hora e a data certas.", curio: "Se ela acabar, seu PC vai achar que ainda está no ano de 2005 toda vez que ligar!" },
+            pcie: { name: "Slot PCI Express x16", func: "A 'Pista de Corrida'. É o caminho mais rápido da placa.", curio: "Essa pista é serial. Ela manda dados em altíssima velocidade." },
+            pci: { name: "Slot PCI Tradicional", func: "Uma 'estrada antiga'. Servia para colocar placas de som antigas.", curio: "Esse barramento é 'paralelo'. Ele tenta mandar vários dados ao mesmo tempo." },
+            bat: { name: "Bateria CMOS", func: "O 'Relógio de Pulso'. Mantém a hora e a data certas.", curio: "Se ela acabar, seu PC vai achar que ainda está no ano de 2005!" },
             sata: { name: "Portas SATA", func: "A 'Entrada do Arquivo'. É por aqui que os arquivos saem do HD.", curio: "O SATA permite que você conecte um HD com o PC ligado (Hot Swap)." },
             io: { name: "Painel Traseiro (E/S)", func: "A 'Fronteira'. É onde o mundo externo se conecta com a placa.", curio: "Cada cor ali tem um sentido: azul é vídeo, as outras são áudio e rede." },
-            cpupwr: { name: "Energia da CPU (EPS)", func: "O 'Lanche VIP'. O processador precisa de um cabo só para ele.", curio: "Se você esquecer de ligar, o PC liga as ventoinhas mas a tela fica preta!" },
+            cpupwr: { name: "Energia da CPU (EPS)", func: "O 'Lanche VIP'. O processador precisa de um cabo só para ele.", curio: "Se você esquecer de ligar, a tela fica preta!" },
             ide: { name: "Conector IDE", func: "O 'Tataravô' do SATA. Usava cabos fita largos.", curio: "Ótimo para recuperar arquivos de PCs de 15 anos atrás." },
             caps: { name: "Capacitores", func: "As 'Caixas d'Água'. Guardam energia e soltam devagarinho.", curio: "Se esses cilindrinhos 'estufarem' ou vazarem, a placa-mãe morre." },
-            traces: { name: "Trilhas de Circuito", func: "As 'Ruas de Cobre'. Fios achatados que levam os dados entre as peças.", curio: "Feitas de cobre puro e cobertas por verniz azul para não enferrujarem." },
+            traces: { name: "Trilhas de Circuito", func: "As 'Ruas de Cobre'. Fios achatados que levam os dados.", curio: "Feitas de cobre puro e cobertas por verniz azul para não enferrujarem." },
             front: { name: "Painel Frontal", func: "O 'Botão de Ignição'. Ligamos os fios que vão para o botão do gabinete.", curio: "Se errar a posição por 1 milímetro, o PC não liga!" },
             choke: { name: "Indutores (Bobinas)", func: "Os 'Filtros de Linha'. Limpam a sujeira elétrica da energia.", curio: "Eles transformam a energia da tomada numa energia silenciosa." },
-            usb: { name: "Cabeçalhos USB", func: "O 'Extensor'. Liga aquelas portas USB da frente do gabinete.", curio: "Cada porta USB amarela consegue alimentar um celular de forma independente." }
+            usb: { name: "Cabeçalhos USB", func: "O 'Extensor'. Liga aquelas portas USB da frente do gabinete.", curio: "Cada porta USB amarela consegue alimentar um celular." }
         };
 
         const wrapper = document.getElementById('wrapper');
         let currentMode = 'study';
-        let examActive = false;
-        let asked = [];
-        let targetId = "";
-        let score = 0;
-        let clickLocked = false;
-        let currentStudentName = "";
 
         window.onload = () => {
             wrapper.classList.add('ready');
+            updateRankingUI(); // Carrega ranking do puzzle ao iniciar
         };
 
         function setMode(mode) {
             currentMode = mode;
             resetZoom();
-            document.querySelectorAll('.mode-switch').forEach(b => b.classList.remove('active'));
-            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-            document.getElementById('viewport').classList.toggle('exam-active', mode === 'exam');
-            document.getElementById('exam-panel').style.display = mode === 'exam' ? 'block' : 'none';
-            if(mode === 'exam') {
-                resetExamUI();
+            
+            // Remove a classe 'active' apenas dos botões de controle de tela (ignora o link externo)
+            document.querySelectorAll('button.mode-switch').forEach(b => b.classList.remove('active'));
+            
+            // Adiciona a classe active no botão clicado
+            const activeBtn = document.querySelector(`button[data-mode="${mode}"]`);
+            if(activeBtn) activeBtn.classList.add('active');
+            
+            const puzzleView = document.getElementById('puzzle-view');
+            const tooltip = document.getElementById('tooltip');
+
+            if (mode === 'puzzle') {
+                wrapper.style.display = 'none'; 
+                tooltip.style.display = 'none'; 
+                puzzleView.style.display = 'flex'; 
+                quitPuzzle(); // Volta pro menu do quebra cabeça
+            } else {
+                puzzleView.style.display = 'none'; 
+                wrapper.style.display = 'inline-block'; 
             }
         }
 
-        function resetExamUI() {
-            document.getElementById('exam-intro').style.display = 'block';
-            document.getElementById('exam-active-area').style.display = 'none';
-            document.getElementById('exam-result').style.display = 'none';
-            document.getElementById('student-name').value = ""; 
-            document.getElementById('exam-score').innerText = "000";
-        }
-
+        // ====== LÓGICA DE ESTUDO ======
         function handleHotspotClick(id, event) {
-            if (currentMode === 'study') {
-                const item = data[id];
-                document.getElementById('t-name').innerText = item.name;
-                document.getElementById('t-func').innerText = item.func;
-                document.getElementById('t-curio').innerText = item.curio;
-                
-                const tooltip = document.getElementById('tooltip');
-                tooltip.style.display = 'block';
-                
-                const rect = wrapper.getBoundingClientRect();
-                const x = ((event.clientX - rect.left) / rect.width) * 100;
-                const y = ((event.clientY - rect.top) / rect.height) * 100;
-                wrapper.style.transformOrigin = `${x}% ${y}%`;
-                wrapper.style.transform = "scale(2.3)";
-
-                const vpRect = document.getElementById('viewport').getBoundingClientRect();
-                let clickX = event.clientX - vpRect.left;
-                let clickY = event.clientY - vpRect.top;
-                
-                if (clickY - tooltip.offsetHeight < 20) {
-                    tooltip.classList.add('bottom-arrow');
-                    tooltip.style.top = (clickY + 15) + 'px';
-                } else {
-                    tooltip.classList.remove('bottom-arrow');
-                    tooltip.style.top = (clickY - 15) + 'px';
-                }
-
-                let leftPos = clickX - (tooltip.offsetWidth / 2); 
-                leftPos = Math.max(20, Math.min(leftPos, vpRect.width - tooltip.offsetWidth - 20));
-                let arrowPos = ((clickX - leftPos) / tooltip.offsetWidth) * 100;
-                
-                tooltip.style.left = leftPos + 'px';
-                tooltip.style.setProperty('--arrow-pos', Math.max(8, Math.min(92, arrowPos)) + '%');
-
-                document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
-                document.getElementById('h-'+id).classList.add('active');
-            } else if (examActive) {
-                checkAnswer(id);
-            }
-        }
-
-        function startExam() {
-            const nameInput = document.getElementById('student-name').value.trim();
-            if(!nameInput) {
-                alert("⚠️ Por favor, digite seu nome completo para validar a prova.");
-                return;
-            }
-            currentStudentName = nameInput;
-
-            score = 0; asked = []; examActive = true; clickLocked = false;
-            document.getElementById('exam-score').innerText = "000";
-            document.getElementById('exam-intro').style.display = 'none';
-            document.getElementById('exam-result').style.display = 'none';
-            document.getElementById('exam-active-area').style.display = 'block';
-            resetZoom();
-            nextQuestion();
-        }
-
-        function nextQuestion() {
-            const keys = Object.keys(data).filter(k => !asked.includes(k));
-            if (asked.length >= 10 || keys.length === 0) {
-                endGame();
-                return;
-            }
-            targetId = keys[Math.floor(Math.random() * keys.length)];
-            asked.push(targetId);
+            if (currentMode !== 'study') return;
             
-            document.getElementById('q-counter').innerText = `Questão ${asked.length} de 10`;
-            document.getElementById('question-text').innerText = data[targetId].name;
-            document.getElementById('exam-feedback').innerText = "Aguardando seu clique...";
-            document.getElementById('exam-feedback').style.backgroundColor = "transparent";
-            document.getElementById('exam-feedback').style.color = "#94a3b8";
+            const item = data[id];
+            document.getElementById('t-name').innerText = item.name;
+            document.getElementById('t-func').innerText = item.func;
+            document.getElementById('t-curio').innerText = item.curio;
             
-            const progress = ((asked.length - 1) / 10) * 100;
-            document.getElementById('progress-fill').style.width = progress + '%';
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.display = 'block';
             
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('correct-flash', 'wrong-flash'));
-            clickLocked = false;
-        }
+            const rect = wrapper.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            wrapper.style.transformOrigin = `${x}% ${y}%`;
+            wrapper.style.transform = "scale(2.3)";
 
-        function checkAnswer(id) {
-            if (!examActive || clickLocked) return;
-            clickLocked = true;
+            const vpRect = document.getElementById('viewport').getBoundingClientRect();
+            let clickX = event.clientX - vpRect.left;
+            let clickY = event.clientY - vpRect.top;
             
-            const correct = id === targetId;
-            if (correct) score += 10;
-            
-            document.getElementById('h-' + id).classList.add(correct ? 'correct-flash' : 'wrong-flash');
-            document.getElementById('h-' + targetId).classList.add('correct-flash'); 
-            
-            const fb = document.getElementById('exam-feedback');
-            fb.innerText = correct ? "CERTO! +10 pontos" : "ERRADO! Sem pontos.";
-            fb.style.backgroundColor = correct ? "#4ade80" : "#ef4444";
-            fb.style.color = correct ? "#000" : "#fff";
-            
-            document.getElementById('exam-score').innerText = String(score).padStart(3, '0');
-            
-            setTimeout(() => { nextQuestion(); }, 1500);
-        }
+            if (clickY - tooltip.offsetHeight < 20) { tooltip.classList.add('bottom-arrow'); tooltip.style.top = (clickY + 15) + 'px'; } 
+            else { tooltip.classList.remove('bottom-arrow'); tooltip.style.top = (clickY - 15) + 'px'; }
 
-        function endGame() {
-            examActive = false;
-            document.getElementById('progress-fill').style.width = '100%';
-            setTimeout(() => {
-                document.getElementById('exam-active-area').style.display = 'none';
-                document.getElementById('exam-result').style.display = 'block';
-                
-                const finalScoreEl = document.getElementById('final-score-display');
-                finalScoreEl.innerText = score;
-                if(score >= 80) finalScoreEl.style.color = "#4ade80"; 
-                else if(score >= 50) finalScoreEl.style.color = "#eab308"; 
-                else finalScoreEl.style.color = "#ef4444"; 
-            }, 500);
+            let leftPos = clickX - (tooltip.offsetWidth / 2); 
+            leftPos = Math.max(20, Math.min(leftPos, vpRect.width - tooltip.offsetWidth - 20));
+            let arrowPos = ((clickX - leftPos) / tooltip.offsetWidth) * 100;
+            
+            tooltip.style.left = leftPos + 'px';
+            tooltip.style.setProperty('--arrow-pos', Math.max(8, Math.min(92, arrowPos)) + '%');
+
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
+            document.getElementById('h-'+id).classList.add('active');
         }
 
         function resetZoom() {
             wrapper.style.transform = "scale(1)";
             document.getElementById('tooltip').style.display = 'none';
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active', 'correct-flash', 'wrong-flash'));
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
         }
 
-        function printCertificate() {
-            document.getElementById('cert-name-display').innerText = currentStudentName;
-            document.getElementById('cert-score-display').innerText = `${score} / 100`;
+        /* =========================================================
+           LÓGICA DO QUEBRA-CABEÇA E RANKING
+           ========================================================= */
+        let puzzleSize, puzzleLevel, puzzleTimer, puzzleSeconds = 0, puzzleMoves = 0;
+        let dragPiece = null;
+        let pName = "";
+
+        function startPuzzle(size, levelName) {
+            const nameInput = document.getElementById('puzzle-player-name').value.trim();
+            if(!nameInput) { alert("⚠️ Digite seu nome para registrar sua pontuação no Ranking!"); return; }
             
-            const hoje = new Date().toLocaleDateString('pt-BR');
-            document.getElementById('cert-date-display').innerText = hoje;
+            pName = nameInput;
+            puzzleSize = size;
+            puzzleLevel = levelName;
+            puzzleSeconds = 0;
+            puzzleMoves = 0;
+            
+            document.getElementById('puzzle-menu').style.display = 'none';
+            document.getElementById('puzzle-game-area').style.display = 'flex';
+            document.getElementById('puzzle-win').style.display = 'none';
+            updateHUD();
 
-            const certScoreEl = document.getElementById('cert-score-display');
-            if(score >= 80) certScoreEl.style.color = "#4ade80"; 
-            else if(score >= 50) certScoreEl.style.color = "#eab308"; 
-            else certScoreEl.style.color = "#ef4444"; 
+            clearInterval(puzzleTimer);
+            puzzleTimer = setInterval(() => {
+                puzzleSeconds++;
+                updateHUD();
+            }, 1000);
 
-            window.print();
+            createBoardAndPieces();
+        }
+
+        function quitPuzzle() {
+            clearInterval(puzzleTimer);
+            document.getElementById('puzzle-game-area').style.display = 'none';
+            document.getElementById('puzzle-win').style.display = 'none';
+            document.getElementById('puzzle-menu').style.display = 'block';
+            updateRankingUI();
+        }
+
+        function updateHUD() {
+            const m = String(Math.floor(puzzleSeconds / 60)).padStart(2, '0');
+            const s = String(puzzleSeconds % 60).padStart(2, '0');
+            document.getElementById('puzzle-time').innerText = `${m}:${s}`;
+            document.getElementById('puzzle-moves').innerText = puzzleMoves;
+        }
+
+        function createBoardAndPieces() {
+            const board = document.getElementById('board-container');
+            const bank = document.getElementById('pieces-bank');
+            
+            board.innerHTML = '';
+            bank.innerHTML = '';
+
+            board.style.gridTemplateColumns = `repeat(${puzzleSize}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${puzzleSize}, 1fr)`;
+
+            const boardW = 600; 
+            const boardH = 400;
+            const pieceW = boardW / puzzleSize;
+            const pieceH = boardH / puzzleSize;
+
+            let piecesArray = [];
+
+            for (let r = 0; r < puzzleSize; r++) {
+                for (let c = 0; c < puzzleSize; c++) {
+                    const id = `p_${r}_${c}`;
+                    
+                    const slot = document.createElement('div');
+                    slot.className = 'puzzle-slot';
+                    slot.dataset.id = id;
+                    
+                    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
+                    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+                    slot.addEventListener('drop', handleDrop);
+                    board.appendChild(slot);
+
+                    const piece = document.createElement('div');
+                    piece.className = 'puzzle-piece';
+                    piece.draggable = true;
+                    piece.id = 'piece_' + id;
+                    piece.dataset.targetId = id;
+                    
+                    piece.style.width = `${pieceW}px`;
+                    piece.style.height = `${pieceH}px`;
+                    piece.style.backgroundSize = `${boardW}px ${boardH}px`;
+                    piece.style.backgroundPosition = `-${c * pieceW}px -${r * pieceH}px`;
+
+                    piece.addEventListener('dragstart', () => { dragPiece = piece; setTimeout(() => piece.style.opacity = '0.5', 0); });
+                    piece.addEventListener('dragend', () => { dragPiece = null; piece.style.opacity = '1'; checkWinCondition(); });
+                    
+                    piecesArray.push(piece);
+                }
+            }
+
+            bank.addEventListener('dragover', e => e.preventDefault());
+            bank.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if(dragPiece) {
+                    bank.appendChild(dragPiece);
+                    puzzleMoves++;
+                    updateHUD();
+                }
+            });
+
+            piecesArray.sort(() => Math.random() - 0.5);
+            piecesArray.forEach(p => bank.appendChild(p));
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (dragPiece) {
+                if (this.firstChild) {
+                    document.getElementById('pieces-bank').appendChild(this.firstChild);
+                }
+                this.appendChild(dragPiece);
+                puzzleMoves++;
+                updateHUD();
+            }
+        }
+
+        function checkWinCondition() {
+            const slots = document.querySelectorAll('.puzzle-slot');
+            let isWin = true;
+
+            slots.forEach(slot => {
+                const piece = slot.firstChild;
+                if (!piece || piece.dataset.targetId !== slot.dataset.id) {
+                    isWin = false;
+                }
+            });
+
+            if (isWin) {
+                clearInterval(puzzleTimer);
+                setTimeout(() => {
+                    document.getElementById('win-time').innerText = document.getElementById('puzzle-time').innerText;
+                    document.getElementById('win-moves').innerText = puzzleMoves;
+                    document.getElementById('puzzle-win').style.display = 'flex';
+                    saveRanking();
+                }, 300);
+            }
+        }
+
+        function saveRanking() {
+            const rankingKey = 'hardwareLabRanking';
+            let ranking = JSON.parse(localStorage.getItem(rankingKey)) || [];
+            
+            ranking.push({
+                name: pName,
+                level: puzzleLevel,
+                seconds: puzzleSeconds,
+                timeStr: document.getElementById('puzzle-time').innerText,
+                moves: puzzleMoves
+            });
+
+            const levelWeights = { 'Difícil': 1, 'Médio': 2, 'Fácil': 3 };
+            ranking.sort((a, b) => {
+                if(levelWeights[a.level] !== levelWeights[b.level]) return levelWeights[a.level] - levelWeights[b.level];
+                return a.seconds - b.seconds;
+            });
+
+            ranking = ranking.slice(0, 10);
+            localStorage.setItem(rankingKey, JSON.stringify(ranking));
+        }
+
+        function updateRankingUI() {
+            const rankingKey = 'hardwareLabRanking';
+            let ranking = JSON.parse(localStorage.getItem(rankingKey)) || [];
+            const tbody = document.getElementById('ranking-body');
+            
+            if(!tbody) return; 
+            tbody.innerHTML = '';
+
+            if(ranking.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Nenhum registro ainda. Seja o primeiro!</td></tr>';
+                return;
+            }
+
+            ranking.forEach(r => {
+                let color = r.level === 'Difícil' ? '#ef4444' : r.level === 'Médio' ? '#eab308' : '#4ade80';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:#fff;">${r.name}</td>
+                        <td><span class="badge" style="color:${color}; border: 1px solid ${color}">${r.level}</span></td>
+                        <td style="font-family:monospace;">${r.timeStr}</td>
+                        <td>${r.moves}</td>
+                    </tr>
+                `;
+            });
         }
     </script>
 </body>
