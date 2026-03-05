@@ -15,7 +15,7 @@
             --puzzle: #c084fc;
             --border-ui: #334155;
             
-            /* Variáveis pro Quebra Cabeça */
+            /* Variáveis pro Quebra Cabeça (Agora ajustadas dinamicamente pelo JS) */
             --board-w: 600px;
             --board-h: 400px;
         }
@@ -115,6 +115,7 @@
             .cert-footer { margin-top: 50px; font-size: 16px; color: #64748b; border-top: 1px solid #ccc; padding-top: 20px; width: 60%; }
         }
 
+        /* Coordenadas originais - Você vai atualizá-las usando o DEBUG_MODE */
         #h-cpu { top: 25%; left: 32%; width: 22%; height: 18%; }
         #h-ram { top: 18%; left: 66%; width: 14%; height: 46%; }
         #h-atx { top: 29%; left: 81%; width: 5%; height: 19%; }
@@ -301,6 +302,34 @@
     </div>
 
     <script>
+        // =========================================================
+        // 🚨 MODO DE DEPURAÇÃO PARA MAPEAMENTO DE COORDENADAS 🚨
+        // =========================================================
+        const DEBUG_MODE = true; // MUDE PARA "false" QUANDO TERMINAR DE MAPEAR A PLACA!
+
+        if (DEBUG_MODE) {
+            console.warn("DEBUG MODE ATIVADO: Clique na imagem para pegar as coordenadas.");
+            // Mostra os hotspots visualmente
+            setTimeout(() => {
+                document.querySelectorAll('.hotspot').forEach(h => {
+                    h.style.display = 'block';
+                    h.style.background = 'rgba(255, 0, 0, 0.4)';
+                    h.style.border = '2px solid red';
+                });
+            }, 500);
+
+            // Captura o clique e exibe a coordenada
+            document.getElementById('view-img-base').addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                const coordString = `top: ${y.toFixed(2)}%; left: ${x.toFixed(2)}%;`;
+                console.log(coordString);
+                alert(`Copiado para o console!\n\n${coordString}\n\nCole isso no CSS do seu componente.`);
+            });
+        }
+
         const data = {
             cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
             ram: { name: "Slots de Memória RAM", func: "A 'mesa de trabalho'. É aqui que o PC guarda o que você está usando AGORA.", curio: "As cores laranjas indicam o 'Dual Channel'." },
@@ -329,10 +358,39 @@
         let clickLocked = false;
         let currentStudentName = "";
 
+        // Variáveis Dinâmicas do Puzzle
+        let dynamicBoardW = 600;
+        let dynamicBoardH = 400;
+
         window.onload = () => {
             wrapper.classList.add('ready');
-            updateRankingUI(); // Carrega ranking do puzzle ao iniciar
+            updateRankingUI(); 
+            calculatePuzzleDimensions(); // Calcula a proporção da imagem ao carregar
         };
+
+        function calculatePuzzleDimensions() {
+            const baseImg = document.getElementById('view-img-base');
+            // Espera a imagem carregar para ler as dimensões reais
+            if (baseImg.complete) {
+                setDimensions(baseImg);
+            } else {
+                baseImg.onload = () => setDimensions(baseImg);
+            }
+
+            function setDimensions(img) {
+                const natW = img.naturalWidth || 600;
+                const natH = img.naturalHeight || 400;
+                const maxW = 600; // Largura máxima do tabuleiro
+                const ratio = natH / natW;
+                
+                dynamicBoardW = maxW;
+                dynamicBoardH = maxW * ratio;
+
+                // Atualiza o CSS dinamicamente
+                document.documentElement.style.setProperty('--board-w', `${dynamicBoardW}px`);
+                document.documentElement.style.setProperty('--board-h', `${dynamicBoardH}px`);
+            }
+        }
 
         function setMode(mode) {
             currentMode = mode;
@@ -353,7 +411,7 @@
                 tooltip.style.display = 'none'; 
                 examPanel.style.display = 'none'; 
                 puzzleView.style.display = 'flex'; 
-                quitPuzzle(); // Garante que abra no menu do puzzle
+                quitPuzzle(); 
             } else {
                 puzzleView.style.display = 'none'; 
                 wrapper.style.display = 'inline-block'; 
@@ -372,6 +430,9 @@
         }
 
         function handleHotspotClick(id, event) {
+            // Se o DEBUG estiver ativado, não processa o fluxo normal para não atrapalhar
+            if (DEBUG_MODE) return;
+
             if (currentMode === 'study') {
                 const item = data[id];
                 document.getElementById('t-name').innerText = item.name;
@@ -545,10 +606,9 @@
             board.style.gridTemplateColumns = `repeat(${puzzleSize}, 1fr)`;
             board.style.gridTemplateRows = `repeat(${puzzleSize}, 1fr)`;
 
-            const boardW = 600; 
-            const boardH = 400;
-            const pieceW = boardW / puzzleSize;
-            const pieceH = boardH / puzzleSize;
+            // Agora usa as variáveis dinâmicas calculadas
+            const pieceW = dynamicBoardW / puzzleSize;
+            const pieceH = dynamicBoardH / puzzleSize;
 
             let piecesArray = [];
 
@@ -561,7 +621,6 @@
                     slot.className = 'puzzle-slot';
                     slot.dataset.id = id;
                     
-                    // Eventos de Drop do slot
                     slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
                     slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
                     slot.addEventListener('drop', handleDrop);
@@ -576,10 +635,9 @@
                     
                     piece.style.width = `${pieceW}px`;
                     piece.style.height = `${pieceH}px`;
-                    piece.style.backgroundSize = `${boardW}px ${boardH}px`;
+                    piece.style.backgroundSize = `${dynamicBoardW}px ${dynamicBoardH}px`;
                     piece.style.backgroundPosition = `-${c * pieceW}px -${r * pieceH}px`;
 
-                    // Eventos de arrastar
                     piece.addEventListener('dragstart', () => { dragPiece = piece; setTimeout(() => piece.style.opacity = '0.5', 0); });
                     piece.addEventListener('dragend', () => { dragPiece = null; piece.style.opacity = '1'; checkWinCondition(); });
                     
@@ -587,7 +645,6 @@
                 }
             }
 
-            // Eventos do Banco de peças (para permitir retornar peças pro banco)
             bank.addEventListener('dragover', e => e.preventDefault());
             bank.addEventListener('drop', (e) => {
                 e.preventDefault();
@@ -598,7 +655,6 @@
                 }
             });
 
-            // Embaralha e joga no banco
             piecesArray.sort(() => Math.random() - 0.5);
             piecesArray.forEach(p => bank.appendChild(p));
         }
@@ -608,7 +664,6 @@
             this.classList.remove('drag-over');
             
             if (dragPiece) {
-                // Se o slot já tem peça, fazemos o "swap" (troca) enviando a peça atual pro banco
                 if (this.firstChild) {
                     document.getElementById('pieces-bank').appendChild(this.firstChild);
                 }
@@ -652,14 +707,12 @@
                 moves: puzzleMoves
             });
 
-            // Ordena primeiro por Nível (Difícil -> Fácil) e depois por tempo (Menor -> Maior)
             const levelWeights = { 'Difícil': 1, 'Médio': 2, 'Fácil': 3 };
             ranking.sort((a, b) => {
                 if(levelWeights[a.level] !== levelWeights[b.level]) return levelWeights[a.level] - levelWeights[b.level];
                 return a.seconds - b.seconds;
             });
 
-            // Mantém apenas os top 10
             ranking = ranking.slice(0, 10);
             localStorage.setItem(rankingKey, JSON.stringify(ranking));
         }
