@@ -820,7 +820,6 @@
         padding-bottom: 50px;
     }
 
-    /* Campo de Identificação */
     .identificacao-box {
         background: rgba(0, 243, 255, 0.05);
         border: 1px dashed var(--neon-azul);
@@ -849,11 +848,7 @@
         box-sizing: border-box;
         outline: none;
     }
-    .identificacao-box input:focus {
-        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-    }
 
-    /* Estilos das Questões */
     .questao {
         background: rgba(255, 255, 255, 0.05);
         border-left: 4px solid var(--neon-verde);
@@ -883,11 +878,6 @@
         border-color: var(--neon-verde);
     }
 
-    .opcao input {
-        margin-right: 15px;
-    }
-
-    /* Botão Finalizar */
     #btn-finalizar {
         display: block;
         width: 100%;
@@ -901,93 +891,122 @@
         font-weight: bold;
         text-transform: uppercase;
         margin-top: 30px;
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
     }
 
     #btn-finalizar:hover {
         background: var(--neon-verde);
         color: var(--cor-fundo);
-        box-shadow: 0 0 20px var(--neon-verde);
     }
 
-    /* Telas de Resultado */
     #resultado-prova {
         display: none;
-        text-align: center;
-        padding: 30px;
-        border-radius: 15px;
         margin-top: 20px;
     }
 
     .reprovado-box {
+        text-align: center;
+        padding: 30px;
         border: 2px solid #ff003c;
         background: rgba(255, 0, 60, 0.05);
+        border-radius: 15px;
     }
 
-    /* Design do Certificado Cyberpunk */
+    /* --- NOVO DESIGN DO CERTIFICADO PROFISSIONAL --- */
     .certificado-box {
-        border: 2px solid var(--neon-amarelo);
-        background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(10,10,15,0.98));
+        background: #ffffff;
+        color: #333333;
+        border: 8px double #1a1a2e; /* Borda dupla clássica */
         padding: 40px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+        text-align: center;
+        box-shadow: 0 0 20px rgba(255,255,255,0.9);
+        font-family: 'Georgia', serif; /* Fonte mais formal para documentos */
+    }
+
+    .cert-cabecalho {
+        font-family: 'Roboto', sans-serif;
+        font-size: 1rem;
+        color: #555;
+        text-transform: uppercase;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .cert-escola {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #1a1a2e;
     }
 
     .cert-titulo {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--neon-amarelo);
-        font-size: 2.2rem;
-        margin: 0 0 10px 0;
-        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    }
-
-    .cert-sub {
-        color: #8a8a9d;
-        font-size: 1rem;
-        margin-bottom: 30px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
+        font-size: 3rem;
+        color: #1a1a2e;
+        margin: 20px 0;
+        letter-spacing: 3px;
     }
 
     .cert-texto {
         font-size: 1.2rem;
         line-height: 1.8;
+        margin: 20px 0;
     }
 
     .cert-nome {
         display: block;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2rem;
-        color: var(--neon-branco);
-        margin: 20px 0;
+        font-size: 2.2rem;
+        color: #000;
+        margin: 20px auto;
         padding-bottom: 5px;
-        border-bottom: 1px dashed var(--neon-amarelo);
+        border-bottom: 2px solid #ccc;
+        width: 80%;
         text-transform: uppercase;
     }
 
-    .cert-dados {
+    .cert-rodape {
         display: flex;
-        justify-content: center;
-        gap: 40px;
-        margin-top: 40px;
-        font-family: 'Orbitron', sans-serif;
-        color: var(--neon-verde);
+        justify-content: space-around;
+        margin-top: 50px;
+        font-family: 'Roboto', sans-serif;
+        font-size: 1rem;
+    }
+
+    .assinatura {
+        border-top: 1px solid #000;
+        padding-top: 10px;
+        width: 250px;
     }
 
     .btn-imprimir {
-        background: transparent;
-        color: var(--neon-amarelo);
-        border: 1px solid var(--neon-amarelo);
-        padding: 12px 25px;
+        background: #1a1a2e;
+        color: #ffffff;
+        border: none;
+        padding: 15px 30px;
         margin-top: 30px;
         cursor: pointer;
-        font-family: 'Orbitron', sans-serif;
-        transition: 0.3s;
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
+        border-radius: 5px;
+        font-size: 1.1rem;
     }
-    .btn-imprimir:hover {
-        background: var(--neon-amarelo);
-        color: var(--cor-fundo);
+
+    /* --- REGRA MÁGICA PARA IMPRESSÃO --- */
+    @media print {
+        body * {
+            visibility: hidden; /* Esconde tudo no site */
+        }
+        #resultado-prova, #resultado-prova * {
+            visibility: visible; /* Mostra só o certificado */
+        }
+        #resultado-prova {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .btn-imprimir {
+            display: none; /* Esconde o botão de imprimir na folha de papel */
+        }
     }
 </style>
 
@@ -995,18 +1014,16 @@
     
     <div id="tela-formulario">
         <div class="identificacao-box">
-            <label for="nome-aluno">> IDENTIFICAÇÃO DO OPERADOR:</label>
-            <input type="text" id="nome-aluno" placeholder="Digite seu nome completo para o certificado" required>
+            <label for="nome-aluno">> IDENTIFICAÇÃO DO ALUNO:</label>
+            <input type="text" id="nome-aluno" placeholder="Digite seu nome completo para a emissão do certificado" required>
         </div>
 
-        <div id="quiz-form">
-            </div>
+        <div id="quiz-form"></div>
         
-        <button id="btn-finalizar" onclick="calcularNota()">Finalizar Avaliação</button>
+        <button id="btn-finalizar" onclick="calcularNota()">Finalizar Avaliação e Gerar Certificado</button>
     </div>
 
-    <div id="resultado-prova">
-        </div>
+    <div id="resultado-prova"></div>
 
 </div>
 
@@ -1056,7 +1073,7 @@
         const nomeAluno = document.getElementById('nome-aluno').value.trim();
         
         if (nomeAluno === "") {
-            alert("ERRO DE PROTOCOLO: O preenchimento do nome é obrigatório para gerar o certificado.");
+            alert("AVISO: Por favor, preencha seu nome completo para que possamos emitir o certificado.");
             document.getElementById('nome-aluno').focus();
             return;
         }
@@ -1078,45 +1095,49 @@
         const resBox = document.getElementById('resultado-prova');
         resBox.style.display = 'block';
 
-        // Pega a data de hoje no formato Brasileiro
         const dataHoje = new Date().toLocaleDateString('pt-BR');
 
         if (porcentagem >= 70) {
-            // Renderiza o Certificado
             resBox.className = "certificado-box";
             resBox.innerHTML = `
-                <h2 class="cert-titulo">CERTIFICADO DE CAPACITAÇÃO</h2>
-                <div class="cert-sub">Núcleo de Aprendizagem T.I.</div>
+                <div class="cert-cabecalho">
+                    SECRETARIA DE ESTADO DA EDUCAÇÃO<br>
+                    <span class="cert-escola">CEPI MARIA DE JESUS ALVES</span>
+                </div>
                 
-                <p class="cert-texto">Certificamos para os devidos fins que o operador</p>
+                <h2 class="cert-titulo">CERTIFICADO DE CONCLUSÃO</h2>
+                
+                <p class="cert-texto">Certificamos, para os devidos fins, que</p>
                 <strong class="cert-nome">${nome}</strong>
-                <p class="cert-texto">concluiu com êxito o módulo de <strong>Arquitetura e Montagem de Placas-Mãe</strong>, demonstrando proficiência técnica.</p>
+                <p class="cert-texto">concluiu com êxito o treinamento prático em <strong>Arquitetura e Montagem de Placas-Mãe</strong>, obtendo um aproveitamento de <strong>${porcentagem.toFixed(0)}%</strong> na avaliação final.</p>
                 
-                <div class="cert-dados">
-                    <div>PONTUAÇÃO: ${acertos}/20 (${porcentagem.toFixed(0)}%)</div>
-                    <div>DATA: ${dataHoje}</div>
+                <div class="cert-rodape">
+                    <div class="assinatura">
+                        Data de Emissão<br>
+                        <strong>${dataHoje}</strong>
+                    </div>
+                    <div class="assinatura">
+                        Professor(a) Responsável<br>
+                        <strong>Soluções no Ensino</strong>
+                    </div>
                 </div>
 
                 <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
             `;
         } else {
-            // Renderiza a tela de Reprovação
             resBox.className = "reprovado-box";
             resBox.innerHTML = `
-                <h2 style="font-family: 'Orbitron', sans-serif; color: #ff003c;">ACESSO NEGADO: REPROVADO</h2>
-                <p style="font-size: 1.5rem;">Sua pontuação: ${acertos} de ${questoes.length} (${porcentagem.toFixed(0)}%)</p>
-                <p>O protocolo exige um mínimo de 70% de precisão para a emissão do certificado. Revise o banco de dados no Modo Estudo e tente novamente.</p>
-                <button onclick="location.reload()" style="background: transparent; border: 1px solid white; color: white; padding: 10px 20px; cursor: pointer; margin-top: 20px; font-family: 'Orbitron', sans-serif;">Reiniciar Avaliação</button>
+                <h2 style="font-family: 'Orbitron', sans-serif; color: #ff003c;">AVALIAÇÃO INSUFICIENTE</h2>
+                <p style="font-size: 1.5rem; color: white;">Sua nota: ${acertos} de ${questoes.length} (${porcentagem.toFixed(0)}%)</p>
+                <p style="color: #aaa;">Para obter a certificação do CEPI Maria de Jesus Alves, é necessário atingir no mínimo 70% de acertos. Estude os materiais novamente e refaça a prova.</p>
+                <button onclick="location.reload()" style="background: transparent; border: 1px solid white; color: white; padding: 10px 20px; cursor: pointer; margin-top: 20px; font-family: 'Orbitron', sans-serif;">Tentar Novamente</button>
             `;
         }
     }
 
-    // Inicia gerando as questões na tela
     gerarQuestoes();
 </script>
 
-                <h2 style="color: var(--neon-verde); font-family: 'Orbitron', sans-serif;">MODO PROVA</h2>
-                <p>Preparando ambiente de avaliação seguro...</p>
             </main>
 
         </div>
