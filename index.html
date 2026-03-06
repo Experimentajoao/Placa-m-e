@@ -3,742 +3,1137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HardwareLab Pro: Avaliação e Certificação</title>
+    <title>Plataforma de Estudos Cyberpunk</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --bg-dark: #020617;
-            --panel-bg: #0f172a;
-            --text-main: #f1f5f9;
-            --accent: #22d3ee;
-            --correct: #4ade80;
-            --wrong: #ef4444;
-            --puzzle: #c084fc;
-            --border-ui: #334155;
-            
-            /* Variáveis pro Quebra Cabeça (Agora ajustadas dinamicamente pelo JS) */
-            --board-w: 600px;
-            --board-h: 400px;
+            --cor-fundo: #0a0a12;
+            --cor-texto: #e0e0e0;
+            --neon-azul: #00f3ff;
+            --neon-roxo: #bc13fe;
+            --neon-verde: #39ff14;
+            --neon-branco: #ffffff;
+            --neon-amarelo: #ffd700; /* Nova cor para o Modo Aula */
         }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden;}
-
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--accent); text-transform: uppercase; letter-spacing: 3px; margin: 0; font-size: 2em; }
-        
-        .controls-bar {
-            background: var(--panel-bg); padding: 10px 25px; border-radius: 50px;
-            border: 1px solid var(--border-ui); margin-bottom: 20px; display: flex; gap: 15px;
-            box-shadow: 0 0 30px rgba(34, 211, 238, 0.1); z-index: 10;
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            font-family: 'Roboto', sans-serif;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a12 100%);
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
-        .mode-switch {
-            background: none; color: #64748b; border: 2px solid #64748b; padding: 8px 20px;
-            border-radius: 20px; font-weight: 800; text-transform: uppercase; font-size: 0.8em;
-            cursor: pointer; transition: 0.3s; letter-spacing: 1px;
+        .cabecalho-principal {
+            text-align: center;
+            margin-bottom: 40px;
         }
 
-        .mode-switch.active[data-mode="study"] { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
-        .mode-switch.active[data-mode="exam"] { color: #000; border-color: var(--correct); background: var(--correct); }
-        .mode-switch.active[data-mode="puzzle"] { color: #000; border-color: var(--puzzle); background: var(--puzzle); box-shadow: 0 0 15px rgba(192, 132, 252, 0.4); }
-
-        .main-container { display: flex; width: 100%; max-width: 1200px; justify-content: center; position: relative;}
-
-        .viewport {
-            position: relative; width: 100%; height: 78vh; min-height: 600px; overflow: hidden;
-            border: 2px solid var(--border-ui); border-radius: 16px; background: #000;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+        .cabecalho-principal h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-azul);
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            letter-spacing: 3px;
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
         }
 
-        .board-wrapper { position: relative; display: inline-block; transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1); transform-origin: center center; }
-        .board-img { max-width: 100%; max-height: 78vh; display: block; opacity: 0.8; }
-
-        .hotspot { position: absolute; background: rgba(34, 211, 238, 0.05); border: 2px solid var(--accent); border-radius: 4px; cursor: pointer; transition: 0.3s; z-index: 10; display: none;}
-        .board-wrapper.ready .hotspot { display: block; }
-        .viewport:not(.exam-active) .hotspot:hover, .viewport:not(.exam-active) .hotspot.active { background: rgba(34, 211, 238, 0.3); border-color: var(--accent); box-shadow: 0 0 15px var(--accent); z-index: 100; }
-        .hotspot.correct-flash { background: rgba(74, 222, 128, 0.6) !important; border-color: var(--correct) !important; box-shadow: 0 0 25px var(--correct) !important; z-index: 101;}
-        .hotspot.wrong-flash { background: rgba(239, 68, 68, 0.6) !important; border-color: var(--wrong) !important; box-shadow: 0 0 25px var(--wrong) !important; z-index: 101;}
-        .viewport.exam-active .hotspot:not(.correct-flash):not(.wrong-flash) { border-color: transparent; background: transparent; }
-
-        .tooltip { position: absolute; box-sizing: border-box; background: rgba(15, 23, 42, 0.94); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; width: 340px; z-index: 200; display: none; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); transform: translateY(-100%); pointer-events: none; }
-        .tooltip::after { content: ''; position: absolute; top: 100%; left: var(--arrow-pos, 50%); margin-left: -10px; border-width: 10px; border-style: solid; border-color: rgba(15, 23, 42, 0.94) transparent transparent transparent; transition: left 0.3s ease; }
-        .tooltip.bottom-arrow { transform: translateY(0); }
-        .tooltip.bottom-arrow::after { top: -20px; border-color: transparent transparent rgba(15, 23, 42, 0.94) transparent; }
-        .tooltip h2 { color: var(--accent); margin: 0 0 10px 0; font-size: 1.4em; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
-        .tooltip .section { margin-top: 12px; }
-        .tooltip .label { color: var(--accent); font-weight: bold; text-transform: uppercase; font-size: 0.75em; display: block; margin-bottom: 4px; }
-        .tooltip p { margin: 0; font-size: 0.9em; line-height: 1.5; color: #cbd5e1; }
-
-        .exam-panel {
-            position: absolute; top: 20px; right: 20px; background: rgba(15, 23, 42, 0.95);
-            border: 2px solid var(--border-ui); border-radius: 16px; padding: 20px; width: 300px; z-index: 150;
-            backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: none; animation: slideInRight 0.5s ease;
+        .cabecalho-principal p {
+            color: #8a8a9d;
+            font-size: 1.1rem;
+            margin: 0;
         }
-        @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        .exam-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-ui); padding-bottom: 10px; margin-bottom: 15px; }
-        .exam-title { font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 1px; font-size: 0.9em;}
-        .exam-score { font-size: 1.2em; font-weight: 900; color: var(--correct); font-family: monospace; background: rgba(74, 222, 128, 0.1); padding: 4px 8px; border-radius: 6px;}
+        .layout-principal {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            flex-grow: 1;
+            width: 100%;
+        }
 
-        #exam-intro, #exam-active-area, #exam-result { display: none; text-align: center; }
-        .question-label { color: #94a3b8; font-size: 0.85em; text-transform: uppercase; margin-bottom: 10px; display: block; font-weight: bold;}
-        .question-text { color: #fff; font-size: 1.4em; font-weight: 700; line-height: 1.3; min-height: 50px;}
-        .exam-feedback { margin-top: 15px; font-weight: bold; min-height: 1.5em; font-size: 1.1em; border-radius: 6px; padding: 5px;}
-        
-        .student-input { width: 90%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--accent); background: #1e293b; color: #fff; text-align: center; font-weight: bold;}
-        .student-input:focus { outline: none; box-shadow: 0 0 10px var(--accent); }
-        .student-input.puzzle { border-color: var(--puzzle); }
-        .student-input.puzzle:focus { box-shadow: 0 0 10px var(--puzzle); }
-        
-        .btn-exam { width: 100%; margin-top: 10px; background: var(--correct); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 800; font-size: 1em; cursor: pointer; transition: 0.2s;}
-        .btn-exam:hover { transform: scale(1.02); filter: brightness(1.1); }
-        .btn-exam.secondary { background: #334155; color: #fff; }
-        .btn-exam.print { background: #3b82f6; color: #fff; } 
-        .btn-puzzle { background: var(--puzzle); color: #000; }
+        .painel-lateral {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+            flex-shrink: 0;
+        }
 
-        .progress-bar { width: 100%; height: 6px; background: #1e293b; border-radius: 3px; margin-top: 15px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+        .area-conteudo {
+            flex-grow: 1;
+            background: rgba(16, 16, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.05);
+            backdrop-filter: blur(10px);
+            min-height: 500px;
+        }
 
-        #certificate-area { display: none; } 
-        @media print {
-            body > *:not(#certificate-area) { display: none !important; }
-            body { background: white !important; padding: 0; margin: 0; }
-            #certificate-area {
-                display: flex !important; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-                width: 100vw; height: 100vh; color: #000 !important; font-family: 'Segoe UI', sans-serif;
-                border: 15px solid #0f172a; padding: 40px; box-sizing: border-box;
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid white;
+            padding: 18px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: left;
+            letter-spacing: 1px;
+        }
+
+        .btn-inicio { border-color: var(--neon-branco); color: var(--neon-branco); }
+        .btn-inicio:hover { background: var(--neon-branco); color: var(--cor-fundo); box-shadow: 0 0 15px var(--neon-branco); }
+
+        /* Estilo do NOVO botão MODO AULA */
+        .btn-aula { border-color: var(--neon-amarelo); color: var(--neon-amarelo); }
+        .btn-aula:hover { background: var(--neon-amarelo); color: var(--cor-fundo); box-shadow: 0 0 15px var(--neon-amarelo); }
+
+        .btn-estudo { border-color: var(--neon-azul); color: var(--neon-azul); }
+        .btn-estudo:hover { background: var(--neon-azul); color: var(--cor-fundo); box-shadow: 0 0 15px var(--neon-azul); }
+
+        .btn-jogo { border-color: var(--neon-roxo); color: var(--neon-roxo); }
+        .btn-jogo:hover { background: var(--neon-roxo); color: var(--cor-fundo); box-shadow: 0 0 15px var(--neon-roxo); }
+
+        .btn-prova { border-color: var(--neon-verde); color: var(--neon-verde); }
+        .btn-prova:hover { background: var(--neon-verde); color: var(--cor-fundo); box-shadow: 0 0 15px var(--neon-verde); }
+
+        .conteudo-secao {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .ativo { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .rodape-plataforma {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            color: #8a8a9d;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .rodape-plataforma span {
+            color: var(--neon-azul);
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .layout-principal {
+                flex-direction: column;
             }
-            .cert-title { font-size: 40px; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; font-weight: 900; }
-            .cert-subtitle { font-size: 20px; color: #64748b; margin-bottom: 40px; }
-            .cert-name { font-size: 45px; color: #22d3ee; border-bottom: 2px solid #22d3ee; padding-bottom: 10px; margin-bottom: 30px; width: 80%; text-transform: uppercase; font-weight: bold;}
-            .cert-text { font-size: 22px; margin-bottom: 20px; }
-            .cert-score { font-size: 60px; font-weight: 900; color: #4ade80; margin: 20px 0; }
-            .cert-footer { margin-top: 50px; font-size: 16px; color: #64748b; border-top: 1px solid #ccc; padding-top: 20px; width: 60%; }
+            .painel-lateral {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .btn {
+                flex-grow: 1;
+                text-align: center;
+                padding: 12px;
+                font-size: 13px;
+            }
         }
-
-        /* Coordenadas originais - Você vai atualizá-las usando o DEBUG_MODE */
-        #h-cpu { top: 25%; left: 32%; width: 22%; height: 18%; }
-        #h-ram { top: 18%; left: 66%; width: 14%; height: 46%; }
-        #h-atx { top: 29%; left: 81%; width: 5%; height: 19%; }
-        #h-chip { top: 72%; left: 67%; width: 14%; height: 11%; }
-        #h-pcie { top: 66%; left: 30%; width: 35%; height: 5%; }
-        #h-pci { top: 79%; left: 28%; width: 36%; height: 5%; }
-        #h-bat { top: 51%; left: 27%; width: 8%; height: 7%; }
-        #h-sata { top: 84%; left: 63%; width: 15%; height: 5%; }
-        #h-io { top: 15%; left: 10%; width: 13%; height: 48%; }
-        #h-cpupwr { top: 22%; left: 14%; width: 7%; height: 7%; }
-        #h-ide { top: 68%; left: 80%; width: 4%; height: 21%; }
-        #h-caps { top: 31%; left: 24%; width: 6%; height: 15%; }
-        #h-traces { top: 50%; left: 45%; width: 10%; height: 10%; border-radius: 50%; }
-        #h-front { top: 85%; left: 78%; width: 10%; height: 5%; }
-        #h-choke { top: 27%; left: 43%; width: 5%; height: 5%; }
-        #h-usb { top: 85%; left: 47%; width: 12%; height: 4%; }
-
-        /* =========================================================
-           CSS DO QUEBRA-CABEÇA
-           ========================================================= */
-        #puzzle-view { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        
-        #puzzle-menu { text-align: center; background: rgba(15, 23, 42, 0.8); padding: 30px; border-radius: 16px; border: 1px solid var(--puzzle); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
-        .diff-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
-        .btn-diff { background: #1e293b; color: #fff; border: 1px solid var(--puzzle); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;}
-        .btn-diff:hover { background: var(--puzzle); color: #000; transform: translateY(-2px);}
-
-        #puzzle-game-area { display: none; width: 100%; max-width: 1000px; gap: 30px; justify-content: center; align-items: flex-start;}
-        
-        .puzzle-hud { display: flex; justify-content: space-between; width: 100%; max-width: var(--board-w); margin-bottom: 15px; font-weight: bold; font-size: 1.2em; color: var(--puzzle); background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 8px; box-sizing: border-box;}
-        
-        #board-container { width: var(--board-w); height: var(--board-h); border: 2px solid var(--puzzle); background: #0f172a; position: relative; display: grid; box-shadow: 0 0 20px rgba(192, 132, 252, 0.2);}
-        .puzzle-slot { border: 1px dashed #334155; box-sizing: border-box; width: 100%; height: 100%; }
-        .puzzle-slot.drag-over { background: rgba(192, 132, 252, 0.3); border-color: var(--puzzle); }
-
-        #pieces-bank { width: 300px; height: var(--board-h); background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 10px; box-sizing: border-box; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; justify-content: center;}
-        
-        .puzzle-piece {
-            background-image: url('IMG_0040.jpeg'); /* Sua imagem da placa */
-            background-repeat: no-repeat;
-            cursor: grab;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
-        }
-        .puzzle-piece:active { cursor: grabbing; transform: scale(0.95); z-index: 100;}
-        .puzzle-slot .puzzle-piece { box-shadow: none; }
-
-        #puzzle-ranking { margin-top: 30px; width: 100%; max-width: 500px;}
-        .ranking-table { width: 100%; border-collapse: collapse; text-align: left; background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-ui);}
-        .ranking-table th { background: var(--puzzle); color: #000; padding: 10px; text-transform: uppercase; font-size: 0.9em; }
-        .ranking-table td { padding: 10px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
-        .ranking-table tr:last-child td { border-bottom: none; }
-        .badge { background: #334155; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; }
-
-        /* Modal de Vitória */
-        #puzzle-win { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; flex-direction: column; align-items: center; justify-content: center; text-align: center;}
-        #puzzle-win h1 { color: var(--puzzle); font-size: 3em; margin: 0;}
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>HardwareLab <span style="color:var(--correct); font-weight:900">PRO</span></h1>
-        <p>Laboratório Interativo de Arquitetura de Computadores</p>
-    </div>
+    <header class="cabecalho-principal">
+        <h1>NÚCLEO DE APRENDIZAGEM T.I.</h1>
+        <p>Ambiente Virtual de Treinamento Técnico</p>
+    </header>
 
-    <div class="controls-bar">
-        <button class="mode-switch active" data-mode="study" onclick="setMode('study')">🔍 MODO ESTUDO</button>
-        <button class="mode-switch" data-mode="exam" onclick="setMode('exam')">📝 MODO PROVA</button>
-        <button class="mode-switch" data-mode="puzzle" onclick="setMode('puzzle')">🧩 MODO QUEBRA-CABEÇA</button>
-    </div>
-
-    <div class="main-container">
-        <div class="viewport" id="viewport">
+    <div class="layout-principal">
+        
+        <aside class="painel-lateral">
+            <button onclick="mudarModo('secao-inicio')" class="btn btn-inicio">🏠 Início</button>
             
-            <div class="board-wrapper" id="wrapper">
-                <img id="view-img-base" class="board-img base" src="IMG_0040.jpeg" alt="Placa-Mãe">
-                <div id="h-cpu" class="hotspot" onclick="handleHotspotClick('cpu', event)"></div>
-                <div id="h-ram" class="hotspot" onclick="handleHotspotClick('ram', event)"></div>
-                <div id="h-atx" class="hotspot" onclick="handleHotspotClick('atx', event)"></div>
-                <div id="h-chip" class="hotspot" onclick="handleHotspotClick('chip', event)"></div>
-                <div id="h-pcie" class="hotspot" onclick="handleHotspotClick('pcie', event)"></div>
-                <div id="h-pci" class="hotspot" onclick="handleHotspotClick('pci', event)"></div>
-                <div id="h-bat" class="hotspot" onclick="handleHotspotClick('bat', event)"></div>
-                <div id="h-sata" class="hotspot" onclick="handleHotspotClick('sata', event)"></div>
-                <div id="h-io" class="hotspot" onclick="handleHotspotClick('io', event)"></div>
-                <div id="h-cpupwr" class="hotspot" onclick="handleHotspotClick('cpupwr', event)"></div>
-                <div id="h-ide" class="hotspot" onclick="handleHotspotClick('ide', event)"></div>
-                <div id="h-caps" class="hotspot" onclick="handleHotspotClick('caps', event)"></div>
-                <div id="h-traces" class="hotspot" onclick="event.stopPropagation(); handleHotspotClick('traces', event)"></div>
-                <div id="h-front" class="hotspot" onclick="handleHotspotClick('front', event)"></div>
-                <div id="h-choke" class="hotspot" onclick="handleHotspotClick('choke', event)"></div>
-                <div id="h-usb" class="hotspot" onclick="handleHotspotClick('usb', event)"></div>
-            </div>
+            <button onclick="mudarModo('secao-aula')" class="btn btn-aula">👨‍🏫 Modo Aula</button>
+            
+            <button onclick="mudarModo('secao-estudo')" class="btn btn-estudo">📚 Modo Estudo</button>
+            <button onclick="mudarModo('secao-jogo')" class="btn btn-jogo">🎮 Modo Jogo</button>
+            <button onclick="mudarModo('secao-prova')" class="btn btn-prova">📝 Modo Prova</button>
+        </aside>
 
-            <div class="tooltip" id="tooltip">
-                <h2 id="t-name">Componente</h2>
-                <div class="section"><span class="label">O que é e o que faz?</span><p id="t-func"></p></div>
-                <div class="section curiosity"><span class="label" style="color: #f472b6;">Curiosidade 💡</span><p id="t-curio"></p></div>
-            </div>
+        <div class="area-conteudo">
+            
+            <main id="secao-inicio" class="conteudo-secao ativo">
+                <h2 style="font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">SISTEMA PRONTO. AGUARDANDO COMANDO...</h2>
+                <p>Bem-vindo à plataforma de treinamento em Informática. Utilize o painel de navegação à esquerda para acessar os módulos do sistema.</p>
+                <ul style="color: #8a8a9d; line-height: 1.8;">
+                    <li><strong>Modo Aula:</strong> Assista às aulas em vídeo e transmissões.</li>
+                    <li><strong>Modo Estudo:</strong> Acesse materiais didáticos, textos e resumos.</li>
+                    <li><strong>Modo Jogo:</strong> Teste suas habilidades em simulações.</li>
+                    <li><strong>Modo Prova:</strong> Realize as avaliações de módulo.</li>
+                </ul>
+            </main>
 
-            <div id="puzzle-view">
+            <main id="secao-aula" class="conteudo-secao">
+<h2 style="color: var(--neon-amarelo); font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-top: 0;">
+    👨‍🏫 MODO AULA
+</h2>
+
+<div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+    
+    <div style="flex: 2; min-width: 300px; background: rgba(0,0,0,0.6); border: 1px solid var(--neon-amarelo); border-radius: 10px; padding: 20px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);">
+        <h3 style="color: var(--neon-branco); font-family: 'Orbitron', sans-serif; margin-top: 0; font-size: 1.2rem;">
+            Aula 16: Ligação dos Fios do Gabinete na Placa Mãe
+        </h3>
+        
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <iframe 
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                src="https://www.youtube.com/embed/kxeQiOpkd0o" 
+                title="YouTube video player" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen>
+            </iframe>
+        </div>
+
+        <div style="margin-top: 15px; color: #8a8a9d; line-height: 1.6; font-size: 0.95rem;">
+            <p><strong>Descrição do Protocolo:</strong> Aprenda na prática a fazer a ligação correta do painel frontal (USB, Áudio, Power, Reset e LEDs) na placa-mãe. Atenção aos detalhes dos pinos positivos e negativos [00:04:06].</p>
+        </div>
+    </div>
+
+    <div style="flex: 1; min-width: 250px; background: rgba(16, 16, 30, 0.9); border: 1px solid var(--neon-azul); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
+        <h3 style="color: var(--neon-azul); font-family: 'Orbitron', sans-serif; margin-top: 0; text-align: center; font-size: 1.1rem; letter-spacing: 1px;">
+            > TERMINAL DE NOTAS _
+        </h3>
+        
+        <textarea 
+            placeholder="Digite suas anotações aqui durante a aula. Ex: O pino colorido é sempre o positivo..." 
+            style="flex-grow: 1; background: rgba(0,0,0,0.5); border: 1px dashed var(--neon-azul); color: var(--cor-texto); padding: 15px; border-radius: 8px; font-family: 'Roboto', sans-serif; resize: none; outline: none; margin-bottom: 15px; min-height: 250px; line-height: 1.5;"></textarea>
+        
+        <button 
+            style="background: transparent; color: var(--neon-verde); border: 1px solid var(--neon-verde); padding: 12px; border-radius: 5px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: all 0.3s ease; font-weight: bold; text-transform: uppercase;"
+            onmouseover="this.style.background='var(--neon-verde)'; this.style.color='var(--cor-fundo)'; this.style.boxShadow='0 0 15px var(--neon-verde)';" 
+            onmouseout="this.style.background='transparent'; this.style.color='var(--neon-verde)'; this.style.boxShadow='none';">
+            Salvar Registro
+        </button>
+    </div>
+
+</div>
+
+              
+                </main>
+
+            <main id="secao-estudo" class="conteudo-secao">
+
+
+<h2 style="color: var(--neon-azul); font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-top: 0;">
+    📚 MODO ESTUDO: MAPEAMENTO DE HARDWARE
+</h2>
+<p style="color: #8a8a9d; margin-bottom: 25px;">> INSTRUÇÃO: Clique nos indicadores de luz para acessar o banco de dados do componente.</p>
+
+<style>
+    /* Ponto pulsante sobre a imagem */
+    .ponto-neon {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        background-color: transparent;
+        border: 2px solid var(--neon-verde);
+        border-radius: 50%;
+        cursor: pointer;
+        transform: translate(-50%, -50%); /* Centraliza o ponto exato do clique */
+        box-shadow: 0 0 10px var(--neon-verde) inset, 0 0 10px var(--neon-verde);
+        animation: pulsar-verde 1.5s infinite alternate;
+        transition: all 0.3s ease;
+        z-index: 5;
+    }
+    
+    .ponto-neon:hover {
+        background-color: var(--neon-verde);
+        transform: translate(-50%, -50%) scale(1.3);
+    }
+
+    @keyframes pulsar-verde {
+        from { opacity: 0.5; box-shadow: 0 0 5px var(--neon-verde); }
+        to { opacity: 1; box-shadow: 0 0 15px var(--neon-verde), 0 0 25px var(--neon-verde); }
+    }
+
+    /* Estilo do Balão de Informação (Modal) */
+    .balao-info {
+        display: none; 
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(10, 10, 18, 0.95);
+        border: 1px solid var(--neon-azul);
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+        width: 90%;
+        max-width: 450px;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .balao-info h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--neon-azul);
+        margin-top: 0;
+        border-bottom: 1px dashed rgba(255,255,255,0.2);
+        padding-bottom: 10px;
+    }
+
+    .balao-info ul {
+        list-style: none;
+        padding: 0;
+        line-height: 1.8;
+    }
+
+    .balao-info li strong {
+        color: var(--neon-branco);
+    }
+
+    .fechar-balao {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: transparent;
+        color: var(--neon-roxo);
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .fechar-balao:hover {
+        color: white;
+        text-shadow: 0 0 10px var(--neon-roxo);
+    }
+
+    /* Fundo escuro quando o balão abre */
+    #overlay-estudo {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 99;
+    }
+</style>
+
+<div style="position: relative; max-width: 900px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+    
+    <img src="https://raw.githubusercontent.com/Experimentajoao/Placa-m-e/main/IMG_0044.jpeg" alt="Mapa da Placa Mãe" style="width: 100%; display: block; height: auto;">
+
+    <div class="ponto-neon" style="top: 35%; left: 16%;" onclick="abrirBalao('slots_pci')"></div>
+    <div class="ponto-neon" style="top: 25%; left: 28%;" onclick="abrirBalao('pcie_1x')"></div>
+    <div class="ponto-neon" style="top: 38%; left: 38%;" onclick="abrirBalao('pcie_16x')"></div>
+    <div class="ponto-neon" style="top: 20%; left: 51%;" onclick="abrirBalao('alimentacao')"></div>
+    <div class="ponto-neon" style="top: 10%; left: 78%;" onclick="abrirBalao('painel_traseiro')"></div>
+    <div class="ponto-neon" style="top: 45%; left: 71%;" onclick="abrirBalao('soquete')"></div>
+    <div class="ponto-neon" style="top: 25%; left: 88%;" onclick="abrirBalao('ponte_sul')"></div>
+    <div class="ponto-neon" style="top: 75%; left: 60%;" onclick="abrirBalao('memoria')"></div>
+    <div class="ponto-neon" style="top: 88%; left: 32%;" onclick="abrirBalao('ide')"></div>
+    <div class="ponto-neon" style="top: 80%; left: 22%;" onclick="abrirBalao('sata')"></div>
+    <div class="ponto-neon" style="top: 88%; left: 10%;" onclick="abrirBalao('jumpers_gabinete')"></div>
+    <div class="ponto-neon" style="top: 66%; left: 20%;" onclick="abrirBalao('bateria')"></div>
+    <div class="ponto-neon" style="top: 66%; left: 29%;" onclick="abrirBalao('ponte_norte')"></div>
+    <div class="ponto-neon" style="top: 55%; left: 20%;" onclick="abrirBalao('bios')"></div>
+
+</div>
+
+<div id="overlay-estudo" onclick="fecharBalao()"></div>
+<div id="balao-componente" class="balao-info">
+    <button class="fechar-balao" onclick="fecharBalao()">[X]</button>
+    <h3 id="balao-titulo">NOME DA PEÇA</h3>
+    <ul>
+        <li><strong>⚙️ Função:</strong> <span id="balao-funcao">...</span></li>
+        <li><strong>📋 Características:</strong> <span id="balao-caract">...</span></li>
+        <li><strong>💰 Preço Médio:</strong> <span id="balao-preco">...</span></li>
+        <li style="margin-top: 15px; color: var(--neon-amarelo);"><strong>💡 Curiosidade:</strong> <span id="balao-curiosidade">...</span></li>
+    </ul>
+</div>
+
+<script>
+    // Banco de Dados das Peças
+    const dadosPlacaMae = {
+        'slots_pci': {
+            titulo: 'SLOTS PCI (Padrão Antigo)',
+            funcao: 'Conectar placas de expansão antigas (rede, som, etc).',
+            caract: 'Barramento paralelo, branco, taxa de transferência baixa comparada aos atuais.',
+            preco: 'Placas para esse slot variam de R$ 20 a R$ 100.',
+            curiosidade: 'Praticamente extintos nas placas-mães modernas, foram substituídos pelo PCIe.'
+        },
+        'pcie_16x': {
+            titulo: 'PCI EXPRESS 16X',
+            funcao: 'Conectar a Placa de Vídeo (GPU).',
+            caract: 'Alta velocidade de transferência de dados (barramento serial).',
+            preco: 'As placas de vídeo variam de R$ 500 a mais de R$ 15.000.',
+            curiosidade: 'O "16x" significa que ele tem 16 vias de dados simultâneas. É a pista expressa da placa-mãe!'
+        },
+        'pcie_1x': {
+            titulo: 'PCI EXPRESS 1X',
+            funcao: 'Conectar placas de expansão menores (Wi-Fi, Placa de Som, Captura).',
+            caract: 'Pequeno, possui apenas 1 via de dados.',
+            preco: 'Adaptadores variam de R$ 50 a R$ 300.',
+            curiosidade: 'Apesar de pequeno, é muito mais rápido que o antigo PCI grandão branco.'
+        },
+        'alimentacao': {
+            titulo: 'CONECTOR DE ALIMENTAÇÃO (ATX 24 Pinos)',
+            funcao: 'Receber a energia da Fonte de Alimentação para distribuir na placa.',
+            caract: 'Possui 24 pinos com diferentes tensões (3.3V, 5V, 12V).',
+            preco: 'Faz parte da placa, mas uma boa fonte custa de R$ 300 a R$ 1000.',
+            curiosidade: 'O encaixe tem um clipe de segurança e um formato específico, é impossível ligar invertido.'
+        },
+        'painel_traseiro': {
+            titulo: 'CONECTORES TRASEIROS (I/O)',
+            funcao: 'Interface com os periféricos externos do usuário.',
+            caract: 'Abriga portas USB, Rede (RJ45), Áudio e saídas de vídeo.',
+            preco: 'N/A',
+            curiosidade: 'Sempre que você vai montar o PC, não pode esquecer de colocar o "Espelho" metálico no gabinete antes de encaixar a placa!'
+        },
+        'soquete': {
+            titulo: 'SOQUETE DO PROCESSADOR (CPU)',
+            funcao: 'Acomodar e conectar o Processador (o cérebro do PC) à placa-mãe.',
+            caract: 'Pode ser do tipo LGA (pinos na placa) ou PGA (pinos no processador).',
+            preco: 'Processadores variam de R$ 300 a R$ 5.000+.',
+            curiosidade: 'Se você amassar um pino aqui, pode inutilizar a placa-mãe inteira. Tem que ter mão de cirurgião!'
+        },
+        'ponte_sul': {
+            titulo: 'PONTE SUL (Southbridge)',
+            funcao: 'Controlar dispositivos mais lentos de entrada e saída.',
+            caract: 'Fica embaixo de um dissipador térmico (heatsink). Controla HDs, USBs e áudio.',
+            preco: 'Soldado na placa.',
+            curiosidade: 'Em placas muito modernas, as funções da Ponte Sul e Norte foram quase todas integradas dentro do próprio processador.'
+        },
+        'ponte_norte': {
+            titulo: 'PONTE NORTE (Northbridge)',
+            funcao: 'Controlar dispositivos rápidos (Memória RAM, Placa de Vídeo).',
+            caract: 'Fica próximo ao processador para garantir alta velocidade.',
+            preco: 'Soldado na placa.',
+            curiosidade: 'Esquenta tanto que precisa do seu próprio dissipador de calor (essa peça laranja na imagem).'
+        },
+        'memoria': {
+            titulo: 'SLOTS DE MEMÓRIA RAM',
+            funcao: 'Encaixar os pentes de memória de trabalho do computador.',
+            caract: 'A cor diferente (amarelo/laranja) indica canais para fazer Dual-Channel.',
+            preco: 'Pentes de RAM variam de R$ 100 a R$ 1000 dependendo da capacidade e DDR.',
+            curiosidade: 'Se colocar as memórias nas cores iguais (ex: dois amarelos), elas trabalham juntas em dobro de velocidade (Dual-Channel).'
+        },
+        'ide': {
+            titulo: 'SLOT IDE (PATA)',
+            funcao: 'Conectar HDs e Leitores de CD/DVD antigos.',
+            caract: 'Usa um cabo flat largo e desajeitado de 40 a 80 vias.',
+            preco: 'Tecnologia obsoleta.',
+            curiosidade: 'Eram um pesadelo para a refrigeração do gabinete porque os cabos bloqueavam o vento interno.'
+        },
+        'sata': {
+            titulo: 'CONECTORES SATA',
+            funcao: 'Conectar HDs e SSDs modernos.',
+            caract: 'Cabo fino, transferência de dados em série e muito mais rápida.',
+            preco: 'SSDs SATA custam a partir de R$ 100.',
+            curiosidade: 'Mesmo sendo rápido, o SATA está sendo substituído pelos SSDs M.2 NVMe, que vão direto na placa-mãe.'
+        },
+        'jumpers_gabinete': {
+            titulo: 'JUMPERS DO GABINETE (Painel Frontal)',
+            funcao: 'Conectar o botão de ligar, reiniciar e as luzes frontais do PC.',
+            caract: 'Pinos metálicos agrupados no canto da placa.',
+            preco: 'N/A',
+            curiosidade: 'É a parte que mais dá medo nos iniciantes. Se ligar errado, o botão power não funciona!'
+        },
+        'bateria': {
+            titulo: 'BATERIA CR2032',
+            funcao: 'Manter a memória CMOS e o relógio do sistema funcionando.',
+            caract: 'Bateria de lítio, formato de moeda, 3 Volts.',
+            preco: 'R$ 5 a R$ 15.',
+            curiosidade: 'Se o seu PC está sempre perdendo a hora quando você tira da tomada, é só trocar essa moedinha.'
+        },
+        'bios': {
+            titulo: 'CHIP DA BIOS / ROM',
+            funcao: 'Armazenar o software básico de inicialização da placa.',
+            caract: 'Memória não volátil (não perde dados sem energia).',
+            preco: 'Regravação custa em média R$ 50 a R$ 100.',
+            curiosidade: 'É o primeiro software a rodar no PC. Ele verifica se há placa de vídeo, processador e memória antes de chamar o Windows.'
+        }
+    };
+
+    // Funções para controlar o balão
+    function abrirBalao(idComponente) {
+        // Pega os dados do componente clicado
+        const dados = dadosPlacaMae[idComponente];
+        
+        // Se existir no banco de dados, preenche o balão
+        if(dados) {
+            document.getElementById('balao-titulo').innerText = dados.titulo;
+            document.getElementById('balao-funcao').innerText = dados.funcao;
+            document.getElementById('balao-caract').innerText = dados.caract;
+            document.getElementById('balao-preco').innerText = dados.preco;
+            document.getElementById('balao-curiosidade').innerText = dados.curiosidade;
+            
+            // Mostra o balão e o fundo escuro
+            document.getElementById('balao-componente').style.display = 'block';
+            document.getElementById('overlay-estudo').style.display = 'block';
+        }
+    }
+
+    function fecharBalao() {
+        // Esconde o balão e o fundo escuro
+        document.getElementById('balao-componente').style.display = 'none';
+        document.getElementById('overlay-estudo').style.display = 'none';
+    }
+</script>
+
+      
+            </main>
+
+            <main id="secao-jogo" class="conteudo-secao">
+<h2 style="color: var(--neon-roxo); font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-top: 0;">
+    🎮 MODO JOGO: DESAFIO DE TEMPO
+</h2>
+
+<style>
+    .painel-jogo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .controles-dificuldade {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn-nivel {
+        background: transparent;
+        border: 1px solid var(--neon-roxo);
+        color: var(--neon-branco);
+        padding: 10px 20px;
+        font-family: 'Orbitron', sans-serif;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    .btn-nivel:hover, .btn-nivel.ativo {
+        background: var(--neon-roxo);
+        color: var(--cor-fundo);
+        box-shadow: 0 0 15px var(--neon-roxo);
+    }
+
+    .info-jogo {
+        display: flex;
+        gap: 30px;
+        font-family: 'Orbitron', sans-serif;
+        color: var(--neon-azul);
+        background: rgba(0,0,0,0.5);
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 1px dashed rgba(255,255,255,0.2);
+        font-size: 1.2rem;
+    }
+
+    /* O timer ficará vermelho quando o tempo estiver acabando */
+    .tempo-critico {
+        color: #ff003c !important;
+        text-shadow: 0 0 10px #ff003c;
+        animation: pulsar-vermelho 0.5s infinite alternate;
+    }
+
+    @keyframes pulsar-vermelho {
+        from { opacity: 0.7; }
+        to { opacity: 1; transform: scale(1.05); }
+    }
+
+    #tabuleiro {
+        display: grid;
+        width: 100%;
+        max-width: 500px;
+        aspect-ratio: 1 / 1; 
+        background-color: rgba(10, 10, 18, 0.8);
+        border: 2px solid var(--neon-roxo);
+        box-shadow: 0 0 20px rgba(188, 19, 254, 0.2);
+        gap: 2px; 
+    }
+
+    .peca {
+        width: 100%;
+        height: 100%;
+        background-image: url('https://raw.githubusercontent.com/Experimentajoao/Placa-m-e/main/IMG_0040.jpeg'); /* COLOQUE SUA IMAGEM AQUI */
+        cursor: pointer;
+        transition: transform 0.2s, border 0.2s;
+        box-sizing: border-box;
+    }
+
+    .peca:hover {
+        filter: brightness(1.2);
+    }
+
+    .peca.selecionada {
+        border: 3px solid var(--neon-verde);
+        transform: scale(0.92);
+        box-shadow: 0 0 15px var(--neon-verde);
+        z-index: 10;
+    }
+
+    #mensagem-resultado {
+        display: none;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .msg-vitoria {
+        color: var(--neon-verde);
+        text-shadow: 0 0 15px var(--neon-verde);
+        border: 1px solid var(--neon-verde);
+        background: rgba(57, 255, 20, 0.1);
+    }
+
+    .msg-derrota {
+        color: #ff003c;
+        text-shadow: 0 0 15px #ff003c;
+        border: 1px solid #ff003c;
+        background: rgba(255, 0, 60, 0.1);
+    }
+</style>
+
+<div class="painel-jogo">
+    <p style="color: #8a8a9d; text-align: center;">> AMEAÇA DETECTADA: Restaure o hardware antes que o sistema entre em colapso.</p>
+
+    <div class="controles-dificuldade">
+        <button class="btn-nivel" onclick="iniciarJogo(3, 45)">Nível 1 (45 Segundos)</button>
+        <button class="btn-nivel" onclick="iniciarJogo(4, 90)">Nível 2 (90 Segundos)</button>
+        <button class="btn-nivel" onclick="iniciarJogo(5, 150)">Nível 3 (150 Segundos)</button>
+    </div>
+
+    <div class="info-jogo">
+        <div>⏳ TEMPO RESTANTE: <span id="tempo-restante">0</span>s</div>
+    </div>
+
+    <h3 id="mensagem-resultado"></h3>
+
+    <div id="tabuleiro"></div>
+</div>
+
+<script>
+    let tamanhoGrid = 3;
+    let pecas = [];
+    let pecaSelecionada = null;
+    let tempoRestante = 0;
+    let intervaloTimer;
+    let jogando = false;
+
+    // Inicializa o jogo ao abrir a tela no nível 1 com 45 segundos
+    setTimeout(() => iniciarJogo(3, 45), 500);
+
+    function iniciarJogo(tamanho, tempoMaximo) {
+        tamanhoGrid = tamanho;
+        tempoRestante = tempoMaximo;
+        jogando = true;
+        
+        const displayTempo = document.getElementById('tempo-restante');
+        displayTempo.innerText = tempoRestante;
+        displayTempo.classList.remove('tempo-critico');
+        
+        document.getElementById('mensagem-resultado').style.display = 'none';
+        
+        atualizarBotoesNivel(tamanho);
+        pararTimer();
+        iniciarTimer();
+
+        criarTabuleiro();
+    }
+
+    function atualizarBotoesNivel(tamanho) {
+        const botoes = document.querySelectorAll('.btn-nivel');
+        botoes.forEach(btn => btn.classList.remove('ativo'));
+        if(tamanho === 3) botoes[0].classList.add('ativo');
+        if(tamanho === 4) botoes[1].classList.add('ativo');
+        if(tamanho === 5) botoes[2].classList.add('ativo');
+    }
+
+    function criarTabuleiro() {
+        const tabuleiro = document.getElementById('tabuleiro');
+        tabuleiro.style.gridTemplateColumns = `repeat(${tamanhoGrid}, 1fr)`;
+        tabuleiro.style.gridTemplateRows = `repeat(${tamanhoGrid}, 1fr)`;
+        tabuleiro.innerHTML = '';
+        pecas = [];
+        pecaSelecionada = null;
+
+        for (let i = 0; i < tamanhoGrid * tamanhoGrid; i++) {
+            pecas.push(i);
+        }
+
+        pecas = embaralhar(pecas);
+
+        pecas.forEach((posicaoCorreta, indexAtual) => {
+            const peca = document.createElement('div');
+            peca.classList.add('peca');
+            peca.dataset.index = indexAtual; 
+            peca.dataset.correta = posicaoCorreta; 
+
+            const x = (posicaoCorreta % tamanhoGrid) * (100 / (tamanhoGrid - 1));
+            const y = Math.floor(posicaoCorreta / tamanhoGrid) * (100 / (tamanhoGrid - 1));
+            
+            peca.style.backgroundSize = `${tamanhoGrid * 100}% ${tamanhoGrid * 100}%`;
+            peca.style.backgroundPosition = `${x}% ${y}%`;
+
+            peca.addEventListener('click', () => clicarPeca(peca));
+            tabuleiro.appendChild(peca);
+        });
+    }
+
+    function clicarPeca(pecaClicada) {
+        if (!jogando) return;
+
+        if (!pecaSelecionada) {
+            pecaSelecionada = pecaClicada;
+            pecaClicada.classList.add('selecionada');
+        } else {
+            const index1 = pecaSelecionada.dataset.index;
+            const index2 = pecaClicada.dataset.index;
+
+            const temp = pecas[index1];
+            pecas[index1] = pecas[index2];
+            pecas[index2] = temp;
+
+            pecaSelecionada.classList.remove('selecionada');
+            pecaSelecionada = null;
+
+            atualizarVisualTabuleiro();
+            verificarVitoria();
+        }
+    }
+
+    function atualizarVisualTabuleiro() {
+        const tabuleiro = document.getElementById('tabuleiro');
+        const divs = tabuleiro.children;
+        
+        pecas.forEach((posicaoCorreta, indexAtual) => {
+            const peca = divs[indexAtual];
+            peca.dataset.correta = posicaoCorreta;
+            
+            const x = (posicaoCorreta % tamanhoGrid) * (100 / (tamanhoGrid - 1));
+            const y = Math.floor(posicaoCorreta / tamanhoGrid) * (100 / (tamanhoGrid - 1));
+            peca.style.backgroundPosition = `${x}% ${y}%`;
+        });
+    }
+
+    function verificarVitoria() {
+        let venceu = true;
+        for (let i = 0; i < pecas.length; i++) {
+            if (pecas[i] !== i) {
+                venceu = false;
+                break;
+            }
+        }
+
+        if (venceu) {
+            finalizarJogo(true);
+        }
+    }
+
+    function embaralhar(array) {
+        let arrayEmbaralhado = [...array];
+        for (let i = arrayEmbaralhado.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arrayEmbaralhado[i], arrayEmbaralhado[j]] = [arrayEmbaralhado[j], arrayEmbaralhado[i]];
+        }
+        return arrayEmbaralhado;
+    }
+
+    // --- SISTEMA DE CONTAGEM REGRESSIVA ---
+    function iniciarTimer() {
+        const displayTempo = document.getElementById('tempo-restante');
+        
+        intervaloTimer = setInterval(() => {
+            tempoRestante--;
+            displayTempo.innerText = tempoRestante;
+
+            // Efeito visual quando faltam 10 segundos
+            if(tempoRestante <= 10 && tempoRestante > 0) {
+                displayTempo.classList.add('tempo-critico');
+            }
+
+            // Game Over
+            if(tempoRestante <= 0) {
+                finalizarJogo(false);
+            }
+        }, 1000);
+    }
+
+    function pararTimer() {
+        clearInterval(intervaloTimer);
+    }
+
+    function finalizarJogo(vitoria) {
+        jogando = false;
+        pararTimer();
+        
+        const msgBox = document.getElementById('mensagem-resultado');
+        msgBox.style.display = 'block';
+        
+        if(vitoria) {
+            msgBox.innerText = "ACESSO CONCEDIDO: SISTEMA RESTAURADO!";
+            msgBox.className = "msg-vitoria";
+        } else {
+            msgBox.innerText = "FALHA CRÍTICA: O TEMPO ESGOTOU!";
+            msgBox.className = "msg-derrota";
+            document.getElementById('tempo-restante').classList.remove('tempo-critico');
+        }
+    }
+</script>
+
+              
+                <p>Iniciando simulação virtual...</p>
+            </main>
+
+            <main id="secao-prova" class="conteudo-secao">
+<h2 style="color: var(--neon-verde); font-family: 'Orbitron', sans-serif; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-top: 0;">
+    📝 EXAME DE DIAGNÓSTICO E CERTIFICAÇÃO
+</h2>
+
+<style>
+    .container-prova {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-bottom: 50px;
+    }
+
+    /* Campo de Identificação */
+    .identificacao-box {
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px dashed var(--neon-azul);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+
+    .identificacao-box label {
+        display: block;
+        color: var(--neon-azul);
+        font-family: 'Orbitron', sans-serif;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
+    .identificacao-box input {
+        width: 100%;
+        padding: 15px;
+        background: rgba(0,0,0,0.6);
+        border: 1px solid var(--neon-azul);
+        color: var(--neon-branco);
+        font-family: 'Roboto', sans-serif;
+        font-size: 1.1rem;
+        border-radius: 5px;
+        box-sizing: border-box;
+        outline: none;
+    }
+    .identificacao-box input:focus {
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    /* Estilos das Questões */
+    .questao {
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid var(--neon-verde);
+        padding: 20px;
+        margin-bottom: 25px;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .questao p {
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: var(--neon-branco);
+    }
+
+    .opcao {
+        display: block;
+        margin-bottom: 10px;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 5px;
+        transition: background 0.3s;
+        border: 1px solid transparent;
+    }
+
+    .opcao:hover {
+        background: rgba(57, 255, 20, 0.1);
+        border-color: var(--neon-verde);
+    }
+
+    .opcao input {
+        margin-right: 15px;
+    }
+
+    /* Botão Finalizar */
+    #btn-finalizar {
+        display: block;
+        width: 100%;
+        background: transparent;
+        color: var(--neon-verde);
+        border: 2px solid var(--neon-verde);
+        padding: 20px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.2rem;
+        cursor: pointer;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-top: 30px;
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+
+    #btn-finalizar:hover {
+        background: var(--neon-verde);
+        color: var(--cor-fundo);
+        box-shadow: 0 0 20px var(--neon-verde);
+    }
+
+    /* Telas de Resultado */
+    #resultado-prova {
+        display: none;
+        text-align: center;
+        padding: 30px;
+        border-radius: 15px;
+        margin-top: 20px;
+    }
+
+    .reprovado-box {
+        border: 2px solid #ff003c;
+        background: rgba(255, 0, 60, 0.05);
+    }
+
+    /* Design do Certificado Cyberpunk */
+    .certificado-box {
+        border: 2px solid var(--neon-amarelo);
+        background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(10,10,15,0.98));
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+    }
+
+    .cert-titulo {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--neon-amarelo);
+        font-size: 2.2rem;
+        margin: 0 0 10px 0;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .cert-sub {
+        color: #8a8a9d;
+        font-size: 1rem;
+        margin-bottom: 30px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .cert-texto {
+        font-size: 1.2rem;
+        line-height: 1.8;
+    }
+
+    .cert-nome {
+        display: block;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--neon-branco);
+        margin: 20px 0;
+        padding-bottom: 5px;
+        border-bottom: 1px dashed var(--neon-amarelo);
+        text-transform: uppercase;
+    }
+
+    .cert-dados {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 40px;
+        font-family: 'Orbitron', sans-serif;
+        color: var(--neon-verde);
+    }
+
+    .btn-imprimir {
+        background: transparent;
+        color: var(--neon-amarelo);
+        border: 1px solid var(--neon-amarelo);
+        padding: 12px 25px;
+        margin-top: 30px;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        transition: 0.3s;
+    }
+    .btn-imprimir:hover {
+        background: var(--neon-amarelo);
+        color: var(--cor-fundo);
+    }
+</style>
+
+<div class="container-prova">
+    
+    <div id="tela-formulario">
+        <div class="identificacao-box">
+            <label for="nome-aluno">> IDENTIFICAÇÃO DO OPERADOR:</label>
+            <input type="text" id="nome-aluno" placeholder="Digite seu nome completo para o certificado" required>
+        </div>
+
+        <div id="quiz-form">
+            </div>
+        
+        <button id="btn-finalizar" onclick="calcularNota()">Finalizar Avaliação</button>
+    </div>
+
+    <div id="resultado-prova">
+        </div>
+
+</div>
+
+<script>
+    const questoes = [
+        { q: "Qual o cabo responsável por enviar o sinal do botão de ligar para a placa-mãe?", a: ["Reset SW", "Power SW", "H.D.D LED", "Power LED"], c: 1 },
+        { q: "Sobre a polaridade dos fios (LEDs), geralmente qual cor representa o polo positivo?", a: ["Branco", "Preto", "Fio Colorido", "Azul escuro"], c: 2 },
+        { q: "O que acontece se você inverter a polaridade do cabo Power SW?", a: ["A placa queima", "O botão não funciona", "O computador liga normalmente", "O LED fica aceso direto"], c: 2 },
+        { q: "Qual componente armazena o primeiro software que o PC executa ao ligar?", a: ["Processador", "Memória RAM", "Chip da BIOS", "Chipset Ponte Sul"], c: 2 },
+        { q: "Para que serve a bateria CR2032 instalada na placa-mãe?", a: ["Alimentar o processador", "Manter a hora e configurações do CMOS", "Resfriar a Ponte Norte", "Dar partida no cooler"], c: 1 },
+        { q: "Qual barramento é utilizado preferencialmente para Placas de Vídeo modernas?", a: ["PCI", "PCI Express 16x", "IDE", "SATA"], c: 1 },
+        { q: "A 'Ponte Norte' (Northbridge) é responsável por controlar quais componentes?", a: ["HD e USB", "Som e Rede", "Memória RAM e Vídeo", "Botões do Gabinete"], c: 2 },
+        { q: "Qual a principal vantagem da tecnologia SATA sobre a antiga IDE?", a: ["Cabos mais largos", "Maior velocidade de transmissão", "Não precisa de energia", "Usa sinal analógico"], c: 1 },
+        { q: "O que o recurso 'Dual-Channel' faz nas memórias RAM?", a: ["Dobra a capacidade total", "Dobra a largura de banda (velocidade)", "Protege contra vírus", "Faz o PC ligar mais rápido"], c: 1 },
+        { q: "Em qual componente o processador é encaixado?", a: ["Slot PCI", "Soquete (Socket)", "Ponte Sul", "Slot SATA"], c: 1 },
+        { q: "O conector principal de energia da placa-mãe moderna possui quantos pinos?", a: ["4 pinos", "8 pinos", "20 pinos", "24 pinos"], c: 3 },
+        { q: "Qual a função do 'Speaker' (alto-falante interno) da placa-mãe?", a: ["Tocar música", "Emitir bips de diagnóstico de erro", "Falar com a Cortana", "Melhorar o grave do PC"], c: 1 },
+        { q: "Onde ficam localizadas as portas USB traseiras e a placa de rede?", a: ["No Soquete", "Nos Jumpers", "No Painel Traseiro (I/O)", "Nos Slots de Memória"], c: 2 },
+        { q: "O que significa a sigla CMOS na prática da manutenção?", a: ["Processador", "Configurações voláteis da BIOS", "Tipo de HD", "Sistema Operacional"], c: 1 },
+        { q: "O pino 'vcc' ou '5v' no conector USB representa qual função?", a: ["Dados Positivos", "Dados Negativos", "Alimentação de energia", "Terra (GND)"], c: 2 },
+        { q: "Qual destes slots de expansão é o menor e serve para placas de Wi-Fi ou Som?", a: ["PCI Express 16x", "PCI Express 1x", "Slot IDE", "Socket LGA"], c: 1 },
+        { q: "Se o computador perde a hora toda vez que é desligado da tomada, qual o defeito provável?", a: ["Processador fraco", "Memória RAM suja", "Bateria CR2032 descarregada", "Cabo SATA solto"], c: 2 },
+        { q: "Qual chip controla periféricos 'lentos' como USB e armazenamento?", a: ["Processador", "Ponte Norte", "Ponte Sul", "Memória RAM"], c: 2 },
+        { q: "No vídeo da aula, como identificamos o pino 1 de um conector?", a: ["Pela cor preta", "Pela pequena seta ou indicação na placa", "Sempre é o pino da direita", "Pelo tamanho do fio"], c: 1 },
+        { q: "Qual barramento está praticamente extinto nas placas-mãe modernas?", a: ["PCI Express", "SATA", "PCI (Padrão Antigo)", "RAM DDR4"], c: 2 }
+    ];
+
+    function gerarQuestoes() {
+        const container = document.getElementById('quiz-form');
+        questoes.forEach((item, index) => {
+            const htmlQuestao = `
+                <div class="questao">
+                    <p>${index + 1}. ${item.q}</p>
+                    ${item.a.map((opcao, i) => `
+                        <label class="opcao">
+                            <input type="radio" name="pergunta${index}" value="${i}">
+                            ${opcao}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            container.innerHTML += htmlQuestao;
+        });
+    }
+
+    function calcularNota() {
+        const nomeAluno = document.getElementById('nome-aluno').value.trim();
+        
+        if (nomeAluno === "") {
+            alert("ERRO DE PROTOCOLO: O preenchimento do nome é obrigatório para gerar o certificado.");
+            document.getElementById('nome-aluno').focus();
+            return;
+        }
+
+        let acertos = 0;
+        questoes.forEach((item, index) => {
+            const selecionada = document.querySelector(`input[name="pergunta${index}"]:checked`);
+            if (selecionada && parseInt(selecionada.value) === item.c) {
+                acertos++;
+            }
+        });
+
+        const porcentagem = (acertos / questoes.length) * 100;
+        mostrarResultado(acertos, porcentagem, nomeAluno);
+    }
+
+    function mostrarResultado(acertos, porcentagem, nome) {
+        document.getElementById('tela-formulario').style.display = 'none';
+        const resBox = document.getElementById('resultado-prova');
+        resBox.style.display = 'block';
+
+        // Pega a data de hoje no formato Brasileiro
+        const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+        if (porcentagem >= 70) {
+            // Renderiza o Certificado
+            resBox.className = "certificado-box";
+            resBox.innerHTML = `
+                <h2 class="cert-titulo">CERTIFICADO DE CAPACITAÇÃO</h2>
+                <div class="cert-sub">Núcleo de Aprendizagem T.I.</div>
                 
-                <div id="puzzle-menu">
-                    <h2 style="color: var(--puzzle); margin-top: 0; font-size: 2em;">Montagem de Hardware</h2>
-                    <p style="color: #94a3b8; margin-bottom: 20px;">Reconstrua a placa-mãe o mais rápido possível!</p>
-                    
-                    <input type="text" id="puzzle-player-name" class="student-input puzzle" placeholder="Digite seu nome (Obrigatório)" autocomplete="off">
-                    
-                    <div class="diff-buttons">
-                        <button class="btn-diff" onclick="startPuzzle(3, 'Fácil')">FÁCIL (3x3)</button>
-                        <button class="btn-diff" onclick="startPuzzle(4, 'Médio')">MÉDIO (4x4)</button>
-                        <button class="btn-diff" onclick="startPuzzle(5, 'Difícil')">DIFÍCIL (5x5)</button>
-                    </div>
-
-                    <div id="puzzle-ranking">
-                        <h3 style="color: #fff; text-align: left; margin-bottom: 10px;">🏆 Top Montadores Locais</h3>
-                        <table class="ranking-table">
-                            <thead><tr><th>Nome</th><th>Nível</th><th>Tempo</th><th>Movs</th></tr></thead>
-                            <tbody id="ranking-body">
-                                </tbody>
-                        </table>
-                    </div>
+                <p class="cert-texto">Certificamos para os devidos fins que o operador</p>
+                <strong class="cert-nome">${nome}</strong>
+                <p class="cert-texto">concluiu com êxito o módulo de <strong>Arquitetura e Montagem de Placas-Mãe</strong>, demonstrando proficiência técnica.</p>
+                
+                <div class="cert-dados">
+                    <div>PONTUAÇÃO: ${acertos}/20 (${porcentagem.toFixed(0)}%)</div>
+                    <div>DATA: ${dataHoje}</div>
                 </div>
 
-                <div id="puzzle-game-area">
-                    <div>
-                        <div class="puzzle-hud">
-                            <span>⏱️ <span id="puzzle-time">00:00</span></span>
-                            <span>🔄 Movimentos: <span id="puzzle-moves">0</span></span>
-                        </div>
-                        <div id="board-container"></div>
-                        <button class="btn-exam secondary" style="margin-top: 15px; width: auto; padding: 10px 30px;" onclick="quitPuzzle()">⬅️ DESISTIR E VOLTAR</button>
-                    </div>
-                    <div id="pieces-bank"></div>
-                </div>
+                <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+            `;
+        } else {
+            // Renderiza a tela de Reprovação
+            resBox.className = "reprovado-box";
+            resBox.innerHTML = `
+                <h2 style="font-family: 'Orbitron', sans-serif; color: #ff003c;">ACESSO NEGADO: REPROVADO</h2>
+                <p style="font-size: 1.5rem;">Sua pontuação: ${acertos} de ${questoes.length} (${porcentagem.toFixed(0)}%)</p>
+                <p>O protocolo exige um mínimo de 70% de precisão para a emissão do certificado. Revise o banco de dados no Modo Estudo e tente novamente.</p>
+                <button onclick="location.reload()" style="background: transparent; border: 1px solid white; color: white; padding: 10px 20px; cursor: pointer; margin-top: 20px; font-family: 'Orbitron', sans-serif;">Reiniciar Avaliação</button>
+            `;
+        }
+    }
 
-                <div id="puzzle-win">
-                    <h1>PLACA MONTADA!</h1>
-                    <p style="font-size: 1.2em; margin: 20px 0;">Tempo: <span id="win-time" style="color:var(--puzzle); font-weight:bold;"></span> | Movimentos: <span id="win-moves" style="color:var(--puzzle); font-weight:bold;"></span></p>
-                    <button class="btn-exam btn-puzzle" style="width: 250px;" onclick="quitPuzzle()">VER RANKING</button>
-                </div>
+    // Inicia gerando as questões na tela
+    gerarQuestoes();
+</script>
 
-            </div>
+                <h2 style="color: var(--neon-verde); font-family: 'Orbitron', sans-serif;">MODO PROVA</h2>
+                <p>Preparando ambiente de avaliação seguro...</p>
+            </main>
 
-        </div>
-
-        <div class="exam-panel" id="exam-panel">
-            <div class="exam-header">
-                <span class="exam-title">AVALIAÇÃO</span>
-                <span class="exam-score" id="exam-score">000</span>
-            </div>
-            <div id="exam-intro" style="display: block;">
-                <p style="color: #cbd5e1; font-size: 0.9em;">Identifique-se para validar seu teste:</p>
-                <input type="text" id="student-name" class="student-input" placeholder="Digite seu nome completo" autocomplete="off">
-                <button class="btn-exam" onclick="startExam()">▶️ INICIAR PROVA</button>
-            </div>
-            <div id="exam-active-area">
-                <span class="question-label" id="q-counter">Questão 1 de 10</span>
-                <div class="question-text" id="question-text">Preparando...</div>
-                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-                <div id="exam-feedback" class="exam-feedback"></div>
-            </div>
-            <div id="exam-result">
-                <h2 style="color: #fff; margin: 0 0 10px 0;">Fim de Jogo!</h2>
-                <p style="color: #94a3b8; font-size: 0.9em;">Seu placar final foi:</p>
-                <div style="font-size: 3.5em; font-weight: 900; margin-bottom: 20px;" id="final-score-display">100</div>
-                <button class="btn-exam print" onclick="printCertificate()">🖨️ GERAR CERTIFICADO PDF</button>
-                <button class="btn-exam" onclick="resetExamUI()">🔄 JOGAR NOVAMENTE</button>
-                <button class="btn-exam secondary" onclick="setMode('study')">⬅️ SAIR DA PROVA</button>
-            </div>
         </div>
     </div>
 
-    <div id="certificate-area">
-        <div class="cert-title">CERTIFICADO DE EXCELÊNCIA</div>
-        <div class="cert-subtitle">Laboratório de Arquitetura de Computadores</div>
-        <div class="cert-text">Certificamos com louvor que o(a) aluno(a)</div>
-        <div class="cert-name" id="cert-name-display">Nome do Aluno</div>
-        <div class="cert-text">concluiu a Avaliação Prática de Mapeamento de Hardware com a pontuação final de:</div>
-        <div class="cert-score" id="cert-score-display">100 / 100</div>
-        <div class="cert-text">Demonstrando alto nível de conhecimento em componentes e circuitos de placas-mãe.</div>
-        <div class="cert-footer">Emitido pelo HardwareLab PRO em: <span id="cert-date-display"></span><br>Autenticação Digital Interna</div>
-    </div>
+    <footer class="rodape-plataforma">
+        @experimentajoao | <span>Soluções no Ensino</span>
+    </footer>
 
     <script>
-        // =========================================================
-        // 🚨 MODO DE DEPURAÇÃO PARA MAPEAMENTO DE COORDENADAS 🚨
-        // =========================================================
-        const DEBUG_MODE = true; // MUDE PARA "false" QUANDO TERMINAR DE MAPEAR A PLACA!
-
-        if (DEBUG_MODE) {
-            console.warn("DEBUG MODE ATIVADO: Clique na imagem para pegar as coordenadas.");
-            // Mostra os hotspots visualmente
-            setTimeout(() => {
-                document.querySelectorAll('.hotspot').forEach(h => {
-                    h.style.display = 'block';
-                    h.style.background = 'rgba(255, 0, 0, 0.4)';
-                    h.style.border = '2px solid red';
-                });
-            }, 500);
-
-            // Captura o clique e exibe a coordenada
-            document.getElementById('view-img-base').addEventListener('click', function(e) {
-                const rect = this.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                const coordString = `top: ${y.toFixed(2)}%; left: ${x.toFixed(2)}%;`;
-                console.log(coordString);
-                alert(`Copiado para o console!\n\n${coordString}\n\nCole isso no CSS do seu componente.`);
+        function mudarModo(idSecaoAlvo) {
+            const todasAsSecoes = document.querySelectorAll('.conteudo-secao');
+            todasAsSecoes.forEach(function(secao) {
+                secao.classList.remove('ativo');
             });
-        }
-
-        const data = {
-            cpu: { name: "Socket do Processador", func: "O 'trono' do cérebro do PC. É onde o processador se encaixa.", curio: "Os pinos prateados que você vê no fundo são banhados a ouro real!" },
-            ram: { name: "Slots de Memória RAM", func: "A 'mesa de trabalho'. É aqui que o PC guarda o que você está usando AGORA.", curio: "As cores laranjas indicam o 'Dual Channel'." },
-            atx: { name: "Conector de Força ATX", func: "A 'boca' da placa-mãe. É por onde a comida (eletricidade) da fonte chega.", curio: "Cada fio colorido que encaixa aqui traz uma 'voltagem' diferente." },
-            chip: { name: "Chipset (Southbridge)", func: "O 'Gerente'. Ele cuida das tarefas chatas (USB, Teclado, HD).", curio: "Aquele chip preto da Intel esquenta tanto que usa um 'chapéu' de alumínio." },
-            pcie: { name: "Slot PCI Express x16", func: "A 'Pista de Corrida'. É o caminho mais rápido da placa.", curio: "Essa pista é serial. Ela manda dados em altíssima velocidade." },
-            pci: { name: "Slot PCI Tradicional", func: "Uma 'estrada antiga'. Servia para colocar placas de som antigas.", curio: "Esse barramento é 'paralelo'. Ele tenta mandar vários dados ao mesmo tempo." },
-            bat: { name: "Bateria CMOS", func: "O 'Relógio de Pulso'. Mantém a hora e a data certas.", curio: "Se ela acabar, seu PC vai achar que ainda está no ano de 2005!" },
-            sata: { name: "Portas SATA", func: "A 'Entrada do Arquivo'. É por aqui que os arquivos saem do HD.", curio: "O SATA permite que você conecte um HD com o PC ligado (Hot Swap)." },
-            io: { name: "Painel Traseiro (E/S)", func: "A 'Fronteira'. É onde o mundo externo se conecta com a placa.", curio: "Cada cor ali tem um sentido: azul é vídeo, as outras são áudio e rede." },
-            cpupwr: { name: "Energia da CPU (EPS)", func: "O 'Lanche VIP'. O processador precisa de um cabo só para ele.", curio: "Se você esquecer de ligar, a tela fica preta!" },
-            ide: { name: "Conector IDE", func: "O 'Tataravô' do SATA. Usava cabos fita largos.", curio: "Ótimo para recuperar arquivos de PCs de 15 anos atrás." },
-            caps: { name: "Capacitores", func: "As 'Caixas d'Água'. Guardam energia e soltam devagarinho.", curio: "Se esses cilindrinhos 'estufarem' ou vazarem, a placa-mãe morre." },
-            traces: { name: "Trilhas de Circuito", func: "As 'Ruas de Cobre'. Fios achatados que levam os dados.", curio: "Feitas de cobre puro e cobertas por verniz azul para não enferrujarem." },
-            front: { name: "Painel Frontal", func: "O 'Botão de Ignição'. Ligamos os fios que vão para o botão do gabinete.", curio: "Se errar a posição por 1 milímetro, o PC não liga!" },
-            choke: { name: "Indutores (Bobinas)", func: "Os 'Filtros de Linha'. Limpam a sujeira elétrica da energia.", curio: "Eles transformam a energia da tomada numa energia silenciosa." },
-            usb: { name: "Cabeçalhos USB", func: "O 'Extensor'. Liga aquelas portas USB da frente do gabinete.", curio: "Cada porta USB amarela consegue alimentar um celular." }
-        };
-
-        const wrapper = document.getElementById('wrapper');
-        let currentMode = 'study';
-        let examActive = false;
-        let asked = [];
-        let targetId = "";
-        let score = 0;
-        let clickLocked = false;
-        let currentStudentName = "";
-
-        // Variáveis Dinâmicas do Puzzle
-        let dynamicBoardW = 600;
-        let dynamicBoardH = 400;
-
-        window.onload = () => {
-            wrapper.classList.add('ready');
-            updateRankingUI(); 
-            calculatePuzzleDimensions(); // Calcula a proporção da imagem ao carregar
-        };
-
-        function calculatePuzzleDimensions() {
-            const baseImg = document.getElementById('view-img-base');
-            // Espera a imagem carregar para ler as dimensões reais
-            if (baseImg.complete) {
-                setDimensions(baseImg);
-            } else {
-                baseImg.onload = () => setDimensions(baseImg);
-            }
-
-            function setDimensions(img) {
-                const natW = img.naturalWidth || 600;
-                const natH = img.naturalHeight || 400;
-                const maxW = 600; // Largura máxima do tabuleiro
-                const ratio = natH / natW;
-                
-                dynamicBoardW = maxW;
-                dynamicBoardH = maxW * ratio;
-
-                // Atualiza o CSS dinamicamente
-                document.documentElement.style.setProperty('--board-w', `${dynamicBoardW}px`);
-                document.documentElement.style.setProperty('--board-h', `${dynamicBoardH}px`);
-            }
-        }
-
-        function setMode(mode) {
-            currentMode = mode;
-            resetZoom();
-            
-            document.querySelectorAll('.mode-switch').forEach(b => b.classList.remove('active'));
-            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-            
-            const viewport = document.getElementById('viewport');
-            const examPanel = document.getElementById('exam-panel');
-            const puzzleView = document.getElementById('puzzle-view');
-            const tooltip = document.getElementById('tooltip');
-
-            viewport.classList.toggle('exam-active', mode === 'exam');
-
-            if (mode === 'puzzle') {
-                wrapper.style.display = 'none'; 
-                tooltip.style.display = 'none'; 
-                examPanel.style.display = 'none'; 
-                puzzleView.style.display = 'flex'; 
-                quitPuzzle(); 
-            } else {
-                puzzleView.style.display = 'none'; 
-                wrapper.style.display = 'inline-block'; 
-                examPanel.style.display = mode === 'exam' ? 'block' : 'none'; 
-                if(mode === 'exam') resetExamUI();
-            }
-        }
-
-        // ====== LÓGICA DE PROVA E ESTUDO ======
-        function resetExamUI() {
-            document.getElementById('exam-intro').style.display = 'block';
-            document.getElementById('exam-active-area').style.display = 'none';
-            document.getElementById('exam-result').style.display = 'none';
-            document.getElementById('student-name').value = ""; 
-            document.getElementById('exam-score').innerText = "000";
-        }
-
-        function handleHotspotClick(id, event) {
-            // Se o DEBUG estiver ativado, não processa o fluxo normal para não atrapalhar
-            if (DEBUG_MODE) return;
-
-            if (currentMode === 'study') {
-                const item = data[id];
-                document.getElementById('t-name').innerText = item.name;
-                document.getElementById('t-func').innerText = item.func;
-                document.getElementById('t-curio').innerText = item.curio;
-                
-                const tooltip = document.getElementById('tooltip');
-                tooltip.style.display = 'block';
-                
-                const rect = wrapper.getBoundingClientRect();
-                const x = ((event.clientX - rect.left) / rect.width) * 100;
-                const y = ((event.clientY - rect.top) / rect.height) * 100;
-                wrapper.style.transformOrigin = `${x}% ${y}%`;
-                wrapper.style.transform = "scale(2.3)";
-
-                const vpRect = document.getElementById('viewport').getBoundingClientRect();
-                let clickX = event.clientX - vpRect.left;
-                let clickY = event.clientY - vpRect.top;
-                
-                if (clickY - tooltip.offsetHeight < 20) { tooltip.classList.add('bottom-arrow'); tooltip.style.top = (clickY + 15) + 'px'; } 
-                else { tooltip.classList.remove('bottom-arrow'); tooltip.style.top = (clickY - 15) + 'px'; }
-
-                let leftPos = clickX - (tooltip.offsetWidth / 2); 
-                leftPos = Math.max(20, Math.min(leftPos, vpRect.width - tooltip.offsetWidth - 20));
-                let arrowPos = ((clickX - leftPos) / tooltip.offsetWidth) * 100;
-                
-                tooltip.style.left = leftPos + 'px';
-                tooltip.style.setProperty('--arrow-pos', Math.max(8, Math.min(92, arrowPos)) + '%');
-
-                document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
-                document.getElementById('h-'+id).classList.add('active');
-            } else if (examActive && currentMode === 'exam') {
-                checkAnswer(id);
-            }
-        }
-
-        function startExam() {
-            const nameInput = document.getElementById('student-name').value.trim();
-            if(!nameInput) { alert("⚠️ Por favor, digite seu nome completo para validar a prova."); return; }
-            currentStudentName = nameInput;
-            score = 0; asked = []; examActive = true; clickLocked = false;
-            document.getElementById('exam-score').innerText = "000";
-            document.getElementById('exam-intro').style.display = 'none';
-            document.getElementById('exam-result').style.display = 'none';
-            document.getElementById('exam-active-area').style.display = 'block';
-            resetZoom(); nextQuestion();
-        }
-
-        function nextQuestion() {
-            const keys = Object.keys(data).filter(k => !asked.includes(k));
-            if (asked.length >= 10 || keys.length === 0) { endGame(); return; }
-            targetId = keys[Math.floor(Math.random() * keys.length)];
-            asked.push(targetId);
-            
-            document.getElementById('q-counter').innerText = `Questão ${asked.length} de 10`;
-            document.getElementById('question-text').innerText = data[targetId].name;
-            document.getElementById('exam-feedback').innerText = "Aguardando seu clique...";
-            document.getElementById('exam-feedback').style.backgroundColor = "transparent";
-            document.getElementById('exam-feedback').style.color = "#94a3b8";
-            
-            const progress = ((asked.length - 1) / 10) * 100;
-            document.getElementById('progress-fill').style.width = progress + '%';
-            
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('correct-flash', 'wrong-flash'));
-            clickLocked = false;
-        }
-
-        function checkAnswer(id) {
-            if (!examActive || clickLocked) return;
-            clickLocked = true;
-            
-            const correct = id === targetId;
-            if (correct) score += 10;
-            
-            document.getElementById('h-' + id).classList.add(correct ? 'correct-flash' : 'wrong-flash');
-            document.getElementById('h-' + targetId).classList.add('correct-flash'); 
-            
-            const fb = document.getElementById('exam-feedback');
-            fb.innerText = correct ? "CERTO! +10 pontos" : "ERRADO! Sem pontos.";
-            fb.style.backgroundColor = correct ? "#4ade80" : "#ef4444";
-            fb.style.color = correct ? "#000" : "#fff";
-            document.getElementById('exam-score').innerText = String(score).padStart(3, '0');
-            
-            setTimeout(() => { nextQuestion(); }, 1500);
-        }
-
-        function endGame() {
-            examActive = false;
-            document.getElementById('progress-fill').style.width = '100%';
-            setTimeout(() => {
-                document.getElementById('exam-active-area').style.display = 'none';
-                document.getElementById('exam-result').style.display = 'block';
-                const finalScoreEl = document.getElementById('final-score-display');
-                finalScoreEl.innerText = score;
-                if(score >= 80) finalScoreEl.style.color = "#4ade80"; 
-                else if(score >= 50) finalScoreEl.style.color = "#eab308"; 
-                else finalScoreEl.style.color = "#ef4444"; 
-            }, 500);
-        }
-
-        function resetZoom() {
-            wrapper.style.transform = "scale(1)";
-            document.getElementById('tooltip').style.display = 'none';
-            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active', 'correct-flash', 'wrong-flash'));
-        }
-
-        function printCertificate() {
-            document.getElementById('cert-name-display').innerText = currentStudentName;
-            document.getElementById('cert-score-display').innerText = `${score} / 100`;
-            document.getElementById('cert-date-display').innerText = new Date().toLocaleDateString('pt-BR');
-            const certScoreEl = document.getElementById('cert-score-display');
-            if(score >= 80) certScoreEl.style.color = "#4ade80"; 
-            else if(score >= 50) certScoreEl.style.color = "#eab308"; 
-            else certScoreEl.style.color = "#ef4444"; 
-            window.print();
-        }
-
-        /* =========================================================
-           LÓGICA DO QUEBRA-CABEÇA E RANKING
-           ========================================================= */
-        let puzzleSize, puzzleLevel, puzzleTimer, puzzleSeconds = 0, puzzleMoves = 0;
-        let dragPiece = null;
-        let pName = "";
-
-        function startPuzzle(size, levelName) {
-            const nameInput = document.getElementById('puzzle-player-name').value.trim();
-            if(!nameInput) { alert("⚠️ Digite seu nome para registrar sua pontuação no Ranking!"); return; }
-            
-            pName = nameInput;
-            puzzleSize = size;
-            puzzleLevel = levelName;
-            puzzleSeconds = 0;
-            puzzleMoves = 0;
-            
-            document.getElementById('puzzle-menu').style.display = 'none';
-            document.getElementById('puzzle-game-area').style.display = 'flex';
-            document.getElementById('puzzle-win').style.display = 'none';
-            updateHUD();
-
-            clearInterval(puzzleTimer);
-            puzzleTimer = setInterval(() => {
-                puzzleSeconds++;
-                updateHUD();
-            }, 1000);
-
-            createBoardAndPieces();
-        }
-
-        function quitPuzzle() {
-            clearInterval(puzzleTimer);
-            document.getElementById('puzzle-game-area').style.display = 'none';
-            document.getElementById('puzzle-win').style.display = 'none';
-            document.getElementById('puzzle-menu').style.display = 'block';
-            updateRankingUI();
-        }
-
-        function updateHUD() {
-            const m = String(Math.floor(puzzleSeconds / 60)).padStart(2, '0');
-            const s = String(puzzleSeconds % 60).padStart(2, '0');
-            document.getElementById('puzzle-time').innerText = `${m}:${s}`;
-            document.getElementById('puzzle-moves').innerText = puzzleMoves;
-        }
-
-        function createBoardAndPieces() {
-            const board = document.getElementById('board-container');
-            const bank = document.getElementById('pieces-bank');
-            
-            board.innerHTML = '';
-            bank.innerHTML = '';
-
-            board.style.gridTemplateColumns = `repeat(${puzzleSize}, 1fr)`;
-            board.style.gridTemplateRows = `repeat(${puzzleSize}, 1fr)`;
-
-            // Agora usa as variáveis dinâmicas calculadas
-            const pieceW = dynamicBoardW / puzzleSize;
-            const pieceH = dynamicBoardH / puzzleSize;
-
-            let piecesArray = [];
-
-            for (let r = 0; r < puzzleSize; r++) {
-                for (let c = 0; c < puzzleSize; c++) {
-                    const id = `p_${r}_${c}`;
-                    
-                    // Cria o slot no tabuleiro
-                    const slot = document.createElement('div');
-                    slot.className = 'puzzle-slot';
-                    slot.dataset.id = id;
-                    
-                    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
-                    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
-                    slot.addEventListener('drop', handleDrop);
-                    board.appendChild(slot);
-
-                    // Cria a peça
-                    const piece = document.createElement('div');
-                    piece.className = 'puzzle-piece';
-                    piece.draggable = true;
-                    piece.id = 'piece_' + id;
-                    piece.dataset.targetId = id;
-                    
-                    piece.style.width = `${pieceW}px`;
-                    piece.style.height = `${pieceH}px`;
-                    piece.style.backgroundSize = `${dynamicBoardW}px ${dynamicBoardH}px`;
-                    piece.style.backgroundPosition = `-${c * pieceW}px -${r * pieceH}px`;
-
-                    piece.addEventListener('dragstart', () => { dragPiece = piece; setTimeout(() => piece.style.opacity = '0.5', 0); });
-                    piece.addEventListener('dragend', () => { dragPiece = null; piece.style.opacity = '1'; checkWinCondition(); });
-                    
-                    piecesArray.push(piece);
-                }
-            }
-
-            bank.addEventListener('dragover', e => e.preventDefault());
-            bank.addEventListener('drop', (e) => {
-                e.preventDefault();
-                if(dragPiece) {
-                    bank.appendChild(dragPiece);
-                    puzzleMoves++;
-                    updateHUD();
-                }
-            });
-
-            piecesArray.sort(() => Math.random() - 0.5);
-            piecesArray.forEach(p => bank.appendChild(p));
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            this.classList.remove('drag-over');
-            
-            if (dragPiece) {
-                if (this.firstChild) {
-                    document.getElementById('pieces-bank').appendChild(this.firstChild);
-                }
-                this.appendChild(dragPiece);
-                puzzleMoves++;
-                updateHUD();
-            }
-        }
-
-        function checkWinCondition() {
-            const slots = document.querySelectorAll('.puzzle-slot');
-            let isWin = true;
-
-            slots.forEach(slot => {
-                const piece = slot.firstChild;
-                if (!piece || piece.dataset.targetId !== slot.dataset.id) {
-                    isWin = false;
-                }
-            });
-
-            if (isWin) {
-                clearInterval(puzzleTimer);
-                setTimeout(() => {
-                    document.getElementById('win-time').innerText = document.getElementById('puzzle-time').innerText;
-                    document.getElementById('win-moves').innerText = puzzleMoves;
-                    document.getElementById('puzzle-win').style.display = 'flex';
-                    saveRanking();
-                }, 300);
-            }
-        }
-
-        function saveRanking() {
-            const rankingKey = 'hardwareLabRanking';
-            let ranking = JSON.parse(localStorage.getItem(rankingKey)) || [];
-            
-            ranking.push({
-                name: pName,
-                level: puzzleLevel,
-                seconds: puzzleSeconds,
-                timeStr: document.getElementById('puzzle-time').innerText,
-                moves: puzzleMoves
-            });
-
-            const levelWeights = { 'Difícil': 1, 'Médio': 2, 'Fácil': 3 };
-            ranking.sort((a, b) => {
-                if(levelWeights[a.level] !== levelWeights[b.level]) return levelWeights[a.level] - levelWeights[b.level];
-                return a.seconds - b.seconds;
-            });
-
-            ranking = ranking.slice(0, 10);
-            localStorage.setItem(rankingKey, JSON.stringify(ranking));
-        }
-
-        function updateRankingUI() {
-            const rankingKey = 'hardwareLabRanking';
-            let ranking = JSON.parse(localStorage.getItem(rankingKey)) || [];
-            const tbody = document.getElementById('ranking-body');
-            tbody.innerHTML = '';
-
-            if(ranking.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b;">Nenhum registro ainda. Seja o primeiro!</td></tr>';
-                return;
-            }
-
-            ranking.forEach(r => {
-                let color = r.level === 'Difícil' ? '#ef4444' : r.level === 'Médio' ? '#eab308' : '#4ade80';
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold; color:#fff;">${r.name}</td>
-                        <td><span class="badge" style="color:${color}; border: 1px solid ${color}">${r.level}</span></td>
-                        <td style="font-family:monospace;">${r.timeStr}</td>
-                        <td>${r.moves}</td>
-                    </tr>
-                `;
-            });
+            const secaoParaMostrar = document.getElementById(idSecaoAlvo);
+            secaoParaMostrar.classList.add('ativo');
         }
     </script>
 </body>
